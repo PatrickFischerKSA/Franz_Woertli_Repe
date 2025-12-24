@@ -1,19 +1,22 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Deutsch–Französisch Quiz</title>
+<title>Deutsch → Französisch – Quiz</title>
 <style>
 body{font-family:system-ui,sans-serif;background:#f6f6f6;padding:2rem}
-.card{background:#fff;padding:2rem;max-width:760px;margin:auto;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.1)}
-.correct{color:green}.wrong{color:red}
-.progress-bg{background:#ddd;border-radius:10px;overflow:hidden}
+.card{background:#fff;padding:2rem;max-width:760px;margin:auto;border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.15)}
+h1{margin-top:0}
+.correct{color:green;font-weight:bold}
+.wrong{color:red;font-weight:bold}
+.progress-bg{background:#ddd;border-radius:10px;overflow:hidden;margin-bottom:.3rem}
 #progressBar{height:18px;width:0%;background:#4caf50}
+button{margin-top:.4rem}
 </style>
 </head>
 <body>
 
+<!-- optionale MP3-Dateien (nicht im ZIP enthalten) -->
 <audio id="a50" src="avignon.mp3"></audio>
 <audio id="a60" src="ton-chemin.mp3"></audio>
 <audio id="a70" src="regrette-rien.mp3"></audio>
@@ -23,45 +26,160 @@ body{font-family:system-ui,sans-serif;background:#f6f6f6;padding:2rem}
 <div class="card">
 <h1>Deutsch → Französisch</h1>
 <button id="muteBtn" onclick="toggleMute()">🔊 Ton an</button>
+
 <div class="progress-bg"><div id="progressBar"></div></div>
 <p id="progressText">Fortschritt: 0 %</p>
+
 <h2 id="levelTitle"></h2>
-<p id="prompt"></p>
-<input id="answer">
+<p id="prompt" style="font-size:1.2rem;font-weight:bold"></p>
+
+<input id="answer" style="width:100%;padding:.6rem;font-size:1.1rem" autocomplete="off">
 <button onclick="check()">Antwort prüfen</button>
+
 <p id="feedback"></p>
+<p id="hint"></p>
 <p id="solution"></p>
+
 <button onclick="next()">Weiter</button>
 </div>
 
-<script type="module">
-import { LEVEL1, LEVEL2 } from './data.js';
+<script>
+/* ====================== DATEN ====================== */
 
-let level=1, data=[...LEVEL1], index=0, correct=0, total=0, muted=false;
+/* LEVEL 1 – Wortschatz & Sätze */
+const LEVEL1 = [
+ {de:"der Schulanfang", fr:["la rentrée"]},
+ {de:"das Buch", fr:["le livre"]},
+ {de:"das Heft", fr:["le cahier"]},
+ {de:"der Bleistift", fr:["le crayon"]},
+ {de:"der Kugelschreiber", fr:["le stylo"]},
+ {de:"der Radiergummi", fr:["la gomme"]},
+ {de:"die Schule", fr:["l’école"]},
+ {de:"das Klassenzimmer", fr:["la salle de classe"]},
+ {de:"die Pause", fr:["la récréation"]},
+ {de:"die Familie", fr:["la famille"]},
+ {de:"die Mutter", fr:["la mère"]},
+ {de:"der Vater", fr:["le père"]},
+ {de:"die Schwester", fr:["la sœur"]},
+ {de:"der Bruder", fr:["le frère"]},
+ {de:"die Grosseltern", fr:["les grands-parents"]},
+ {de:"Ich habe Angst.", fr:["J’ai peur."]},
+ {de:"Es regnet.", fr:["Il pleut."]},
+ {de:"Es ist kalt.", fr:["Il fait froid."]},
+ {de:"Es ist warm.", fr:["Il fait chaud."]},
+ {de:"Wir gehen ins Kino.", fr:["Nous allons au cinéma."]},
+ {de:"Ich denke, dass …", fr:["Je pense que …","Je pense que..."]},
+ {de:"Das ist keine gute Idee.", fr:["Ce n’est pas une bonne idée."]},
+ {de:"Ich bin nicht einverstanden.", fr:["Je ne suis pas d’accord."]},
+ {de:"Der Unterricht endet am Mittag.", fr:["Les cours se terminent à midi."]},
+ {de:"Ich habe Hunger.", fr:["J’ai faim."]},
+ {de:"Es war lecker.", fr:["C’était délicieux !"]}
+];
 
-const norm=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[’']/g,"'").trim();
+/* LEVEL 2 – Transfer (Präsens & Passé composé) */
+const LEVEL2 = [
+ {de:"Ich gehe in die Schule.", fr:["Je vais à l’école."]},
+ {de:"Wir gehen ins Kino.", fr:["Nous allons au cinéma."]},
+ {de:"Er ist ins Kino gegangen.", fr:["Il est allé au cinéma."]},
+ {de:"Wir haben einen Film gesehen.", fr:["Nous avons regardé un film."]},
+ {de:"Sie hatte Hunger.", fr:["Elle a eu faim."]},
+ {de:"Der Unterricht hat am Mittag geendet.", fr:["Les cours se sont terminés à midi."]},
+ {de:"Ich habe gedacht, dass …", fr:["J’ai pensé que …"]},
+ {de:"Es hat geregnet.", fr:["Il a plu."]}
+];
 
-function show(){prompt.textContent=data[index].de;answer.value='';feedback.textContent='';solution.textContent='';}
+/* ====================== LOGIK ====================== */
+
+let level = 1;
+let data = shuffle(LEVEL1.slice());
+let index = 0;
+let attempts = 0;
+let correct = 0;
+let total = 0;
+let muted = false;
+
+const audios = {50:a50,60:a60,70:a70,80:a80,90:a90};
+
+function normalize(s){
+ return s.toLowerCase()
+   .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+   .replace(/[’']/g,"'").trim();
+}
+
+function show(){
+ attempts=0;
+ feedback.textContent="";
+ hint.textContent="";
+ solution.textContent="";
+ levelTitle.textContent = level===1 ? "Level 1 – Wortschatz" : "Level 2 – Transfer";
+ prompt.textContent = data[index].de;
+ answer.value="";
+}
+
 function check(){
-  const u=norm(answer.value);
-  const s=data[index].fr.map(norm);
-  if(s.includes(u)){feedback.textContent='✓';correct++;}
-  else{feedback.textContent='✗';solution.textContent=data[index].fr[0];}
-  total++;update();
+ const user = normalize(answer.value);
+ const sols = data[index].fr.map(normalize);
+
+ if(sols.includes(user)){
+   feedback.textContent="✓ Richtig";
+   feedback.className="correct";
+   correct++; total++; update();
+ } else {
+   attempts++;
+   feedback.textContent="✗ Falsch";
+   feedback.className="wrong";
+   if(attempts===2){
+     hint.textContent="Hinweis: Artikel, Verbform, Akzente beachten.";
+   }
+   if(attempts>=3){
+     solution.textContent="Lösung: " + data[index].fr[0];
+     total++; update();
+   }
+ }
 }
+
 function next(){
-  index++;
-  if(index>=data.length){
-    if(level===1){level=2;data=[...LEVEL2];index=0;alert('Level 2');}
-    else{alert('Fertig');return;}
-  }
-  show();
+ index++;
+ if(index>=data.length){
+   playFinal();
+   if(level===1){
+     level=2;
+     data = shuffle(LEVEL2.slice());
+     index=0;
+     alert("Level 2 – Transfer startet");
+   } else {
+     alert("Quiz beendet 🎉");
+     return;
+   }
+ }
+ show();
 }
+
 function update(){
-  const p=Math.round((correct/total)*100);
-  progressBar.style.width=p+'%';progressText.textContent=p+'%';
+ const p = Math.round((correct/total)*100);
+ progressBar.style.width = p + "%";
+ progressText.textContent = "Fortschritt: " + p + " %";
 }
-function toggleMute(){muted=!muted;}
+
+function playFinal(){
+ if(muted) return;
+ const p = Math.round((correct/total)*100);
+ let k=null;
+ if(p>=90)k=90; else if(p>=80)k=80; else if(p>=70)k=70; else if(p>=60)k=60; else if(p>=50)k=50;
+ if(k){
+   Object.values(audios).forEach(a=>{a.pause();a.currentTime=0});
+   audios[k].play();
+ }
+}
+
+function toggleMute(){
+ muted=!muted;
+ muteBtn.textContent = muted ? "🔇 Ton aus" : "🔊 Ton an";
+ if(muted) Object.values(audios).forEach(a=>{a.pause();a.currentTime=0});
+}
+
+function shuffle(arr){ return arr.sort(()=>Math.random()-0.5); }
+
 show();
 </script>
 </body>
