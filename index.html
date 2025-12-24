@@ -1,0 +1,68 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Deutsch–Französisch Quiz</title>
+<style>
+body{font-family:system-ui,sans-serif;background:#f6f6f6;padding:2rem}
+.card{background:#fff;padding:2rem;max-width:760px;margin:auto;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.1)}
+.correct{color:green}.wrong{color:red}
+.progress-bg{background:#ddd;border-radius:10px;overflow:hidden}
+#progressBar{height:18px;width:0%;background:#4caf50}
+</style>
+</head>
+<body>
+
+<audio id="a50" src="avignon.mp3"></audio>
+<audio id="a60" src="ton-chemin.mp3"></audio>
+<audio id="a70" src="regrette-rien.mp3"></audio>
+<audio id="a80" src="mon-mec.mp3"></audio>
+<audio id="a90" src="marseillaise.mp3"></audio>
+
+<div class="card">
+<h1>Deutsch → Französisch</h1>
+<button id="muteBtn" onclick="toggleMute()">🔊 Ton an</button>
+<div class="progress-bg"><div id="progressBar"></div></div>
+<p id="progressText">Fortschritt: 0 %</p>
+<h2 id="levelTitle"></h2>
+<p id="prompt"></p>
+<input id="answer">
+<button onclick="check()">Antwort prüfen</button>
+<p id="feedback"></p>
+<p id="solution"></p>
+<button onclick="next()">Weiter</button>
+</div>
+
+<script type="module">
+import { LEVEL1, LEVEL2 } from './data.js';
+
+let level=1, data=[...LEVEL1], index=0, correct=0, total=0, muted=false;
+
+const norm=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[’']/g,"'").trim();
+
+function show(){prompt.textContent=data[index].de;answer.value='';feedback.textContent='';solution.textContent='';}
+function check(){
+  const u=norm(answer.value);
+  const s=data[index].fr.map(norm);
+  if(s.includes(u)){feedback.textContent='✓';correct++;}
+  else{feedback.textContent='✗';solution.textContent=data[index].fr[0];}
+  total++;update();
+}
+function next(){
+  index++;
+  if(index>=data.length){
+    if(level===1){level=2;data=[...LEVEL2];index=0;alert('Level 2');}
+    else{alert('Fertig');return;}
+  }
+  show();
+}
+function update(){
+  const p=Math.round((correct/total)*100);
+  progressBar.style.width=p+'%';progressText.textContent=p+'%';
+}
+function toggleMute(){muted=!muted;}
+show();
+</script>
+</body>
+</html>
