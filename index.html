@@ -1,41 +1,55 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<title>Quiz – Level 1 (Band 6 + 7)</title>
-<style>
-body{font-family:Arial, sans-serif; max-width:700px; margin:auto;}
-.correct{color:green;}
-.wrong{color:red;}
-</style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Deutsch → Französisch – Quiz</title>
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-<h1>Deutsch → Französisch (Level 1 – Band 6 & 7)</h1>
-<p id="prompt"></p>
-<input id="answer" autocomplete="off">
-<button onclick="check()">OK</button>
-<p id="feedback"></p>
-<script src="data.js"></script>
-<script>
-let i = 0;
-VOCAB.sort(()=>Math.random()-0.5);
-function show(){
-  document.getElementById('prompt').innerText = VOCAB[i].de;
-  document.getElementById('answer').value='';
-  document.getElementById('feedback').innerText='';
-}
-function check(){
-  const a = document.getElementById('answer').value.trim();
-  if(a===VOCAB[i].fr){
-    document.getElementById('feedback').innerHTML='<span class="correct">✓ korrekt</span>';
-    i++;
-    if(i<VOCAB.length){setTimeout(show,600);}
-    else{document.getElementById('prompt').innerText='Fertig.';}
-  } else {
-    document.getElementById('feedback').innerHTML='<span class="wrong">✗ falsch</span>';
-  }
-}
-show();
-</script>
+  <main class="card">
+    <header class="top">
+      <h1>Deutsch → Französisch</h1>
+      <div class="topbar">
+        <button id="btnTone" class="btn">🔊 Ton an</button>
+        <button id="btnReset" class="btn btn-ghost">Reset</button>
+      </div>
+      <div class="progressWrap" aria-label="Fortschritt">
+        <div id="progressBar" class="progressBar"></div>
+      </div>
+      <div class="stats">
+        <div><b>Level:</b> <span id="levelLabel">1</span></div>
+        <div><b>Runde:</b> <span id="roundLabel">1</span> / 5</div>
+        <div><b>Aufgabe:</b> <span id="qLabel">1</span> / 25</div>
+        <div><b>Trefferquote:</b> <span id="rateLabel">0%</span></div>
+      </div>
+      <p class="hint" id="audioHint"></p>
+    </header>
+
+    <section class="qa">
+      <h2 id="prompt">…</h2>
+      <div class="row">
+        <input id="answer" type="text" autocomplete="off" spellcheck="false" placeholder="Französisch eintippen…"/>
+        <button id="btnCheck" class="btn">Antwort prüfen</button>
+      </div>
+      <div class="row">
+        <button id="btnNext" class="btn btn-ghost" disabled>Weiter</button>
+      </div>
+      <div id="feedback" class="feedback"></div>
+    </section>
+
+    <footer class="footer">
+      <small>Level 1: alle Einträge aus Band 6 + Band 7 (plus Band‑6‑Fortsetzung aus dem Chat). Level 2 ist absichtlich leer, bis du die Transferliste lieferst.</small>
+    </footer>
+
+    <audio id="audio50" preload="none" src="audio/sur_le_pont_davignon.mp3"></audio>
+    <audio id="audio60" preload="none" src="audio/di_waeg_ton_chemin.mp3"></audio>
+    <audio id="audio70" preload="none" src="audio/je_ne_regrette_rien.mp3"></audio>
+    <audio id="audio80" preload="none" src="audio/mon_mec_a_moi.mp3"></audio>
+    <audio id="audio90" preload="none" src="audio/la_marseillaise.mp3"></audio>
+  </main>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

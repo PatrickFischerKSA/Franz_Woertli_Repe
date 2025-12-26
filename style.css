@@ -1,0 +1,28 @@
+
+:root { --bg:#f3f3f3; --card:#ffffff; --text:#111; --muted:#666; --line:#ddd; --shadow: 0 10px 30px rgba(0,0,0,.10); }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;}
+.card{max-width:980px;margin:28px auto;padding:28px;border-radius:18px;background:var(--card);box-shadow:var(--shadow)}
+h1{margin:0 0 10px 0;font-size:52px;letter-spacing:-.5px}
+.topbar{display:flex;gap:10px;align-items:center;margin:10px 0 10px}
+.btn{padding:10px 14px;border:1px solid var(--line);background:#fff;border-radius:10px;cursor:pointer;font-size:16px}
+.btn:hover{filter:brightness(.97)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-ghost{background:transparent}
+.progressWrap{width:100%;height:18px;background:#e6e6e6;border-radius:999px;overflow:hidden;margin:10px 0 14px}
+.progressBar{height:100%;width:0%;background:#bdbdbd;transition:width .2s ease}
+.stats{display:grid;grid-template-columns:repeat(4, minmax(0,1fr));gap:12px;margin:8px 0 8px}
+.hint{margin:8px 0 0;color:var(--muted);min-height:1.2em}
+.qa{margin-top:18px}
+h2{font-size:34px;margin:0 0 14px}
+.row{display:flex;gap:10px;align-items:center;margin:10px 0}
+input{flex:1;padding:14px 14px;font-size:18px;border-radius:12px;border:1px solid var(--line)}
+.feedback{margin-top:10px;font-size:18px;min-height:1.4em}
+.good{color:#0a7a0a}
+.bad{color:#b00020}
+.footer{margin-top:18px;color:var(--muted)}
+@media (max-width:700px){
+  h1{font-size:36px}
+  h2{font-size:26px}
+  .stats{grid-template-columns:repeat(2, minmax(0,1fr))}
+}
