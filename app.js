@@ -52,6 +52,18 @@ function stripDiacritics(s){
     .replace(/[\u0300-\u036f]/g,"");
 }
 
+
+// optionale Präpositionen (werden ignoriert, wenn nicht angegeben)
+const OPTIONAL_PREPS = ["a","à","au","aux","de","du","des","en","sur","avec","sans","pour","chez"];
+
+function stripOptionalPreps(x){
+  let y = x;
+  OPTIONAL_PREPS.forEach(p=>{
+    y = y.replace(new RegExp("^"+p, "g"), "");
+  });
+  return y;
+}
+
 /* ---------- ULTRA-NORMALISIERUNG ---------- */
 function ultraNormalize(s){
   let x = (s || "").toLowerCase().trim();
@@ -73,22 +85,38 @@ function ultraNormalize(s){
   // Leerzeichen & Satzzeichen entfernen
   x = x.replace(/[\s.,;:!?()]/g,"");
 
+  x = stripOptionalPreps(x);
   return x;
+}
+
+
+/* ---------- (e)-VARIANTEN ----------
+   Akzeptiert fatigué / fatiguée, content / contente etc.
+*/
+function expandEVariants(s){
+  if (!s) return [];
+  const base = s;
+  const variants = new Set();
+  variants.add(base);
+  // fatigué(e) -> fatigué, fatiguée
+  if (/\(e\)/.test(base)){
+    variants.add(base.replace(/\(e\)/g,""));
+    variants.add(base.replace(/\(e\)/g,"e"));
+  }
+  return Array.from(variants);
 }
 
 /* ---------- KORREKTUR ---------- */
 function isCorrect(user, expected){
+  const expVars = expandEVariants(expected);
+
   if (!user) return false;
 
   const u = ultraNormalize(user);
-  const e = ultraNormalize(expected);
-
-  // 1) direkt
-  if (u === e) return true;
-
-  // 2) erlaube fehlenden Artikel (z.B. "soeur" statt "la soeur")
-  if (u === e.replace(/^(la|le|les|un|une|des)/,"")) return true;
-
+  for (const ev of expVars){
+    const e = ultraNormalize(ev);
+    if (u === e) return true;
+  }
   return false;
 }
 
@@ -173,9 +201,18 @@ function checkAnswer(){
   answeredTotal += 1;
   if (isCorrect($("answer").value, item.fr)){
     correctTotal += 1;
-    setFeedback("✓ korrekt", "good");
+    if (/\(e\)/.test(item.fr)) {
+      setFeedback("✓ korrekt <small>(maskulin / feminin akzeptiert)</small>", "good");
+    } else {
+      setFeedback("✓ korrekt", "good");
+    }
   } else {
-    setFeedback("✗ falsch<br><small>Erwartet: <b>"+item.fr+"</b></small>", "bad");
+    let sol = item.fr;
+  if (/\(e\)/.test(sol)){
+    const vs = expandEVariants(sol).filter(v=>!v.includes("(e)"));
+    sol = vs.join(" / ");
+  }
+  setFeedback("✗ falsch<br><small>Erwartet: <b>"+sol+"</b></small>", "bad");
   }
   $("answer").disabled = true;
   $("btnCheck").disabled = true;
