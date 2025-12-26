@@ -52,6 +52,28 @@ function expandEVariants(s){
   return [s.replace(/\(e\)/g,""), s.replace(/\(e\)/g,"e")];
 }
 
+
+/* ---------- ARTIKEL-CHECK (GENUS MUSS STIMMEN) ----------
+   Wenn der/die Lernende einen Artikel eingibt (le/la/un/une/l’ ...),
+   dann MUSS er zum erwarteten Nomen passen.
+   Ohne Artikel bleibt es (wie bisher) kulant.
+*/
+const _ARTS = ["le","la","l'","les","un","une","des"];
+
+function _normApos(x){
+  return (x || "").replace(/[’]/g,"'");
+}
+
+function extractLeadingArticle(s){
+  let x = _normApos((s || "").trim().toLowerCase());
+  if (x.startsWith("l'")) return "l'";
+  for (const a of _ARTS){
+    if (a === "l'") continue;
+    if (x.startsWith(a + " ")) return a;
+  }
+  return null;
+}
+
 /* ULTRA NORMALIZE */
 function ultraNormalize(s){
   let x = (s || "").toLowerCase().trim();
@@ -85,30 +107,40 @@ const SEMANTIC_FR_EQUIV = {
 };
 
 /* KORREKTUR */
+
 function isCorrect(user, expected, promptDe){
-  const u = ultraNormalize(user);
+  const userRaw = (user || "");
+  const uArt = extractLeadingArticle(userRaw);
+  const u = ultraNormalize(userRaw);
 
-  // 1) direkte Lösung (+ (e)-Varianten)
+  // Kandidaten sammeln: expected (+ (e)-Varianten) + Item-Alternativen + DE-Map
+  const candidates = [];
+
   for (const ev of expandEVariants(expected)){
-    if (u === ultraNormalize(ev)) return true;
+    candidates.push(ev);
   }
 
-  // 2) Item-spezifische Alternativen
   if (Array.isArray(this?.frAlt)){
-    for (const alt of this.frAlt){
-      if (u === ultraNormalize(alt)) return true;
-    }
+    for (const alt of this.frAlt) candidates.push(alt);
   }
 
-  // 3) Deutsche Prompt-abhängige Entsprechungen
   const key = (promptDe || "").toLowerCase();
-  if (SEMANTIC_FR_EQUIV[key]){
-    for (const alt of SEMANTIC_FR_EQUIV[key]){
-      if (u === ultraNormalize(alt)) return true;
-    }
+  if (SEMANTIC_FR_EQUIV && SEMANTIC_FR_EQUIV[key]){
+    for (const alt of SEMANTIC_FR_EQUIV[key]) candidates.push(alt);
   }
+
+  // Prüfen
+  for (const cand of candidates){
+    const cArt = extractLeadingArticle(cand);
+    // Wenn User einen Artikel schreibt UND Kandidat einen Artikel hat: muss matchen
+    if (uArt && cArt && uArt !== cArt) continue;
+
+    if (u === ultraNormalize(cand)) return true;
+  }
+
   return false;
 }
+
 
 function setFeedback(html, cls){
   const el = $("feedback");
