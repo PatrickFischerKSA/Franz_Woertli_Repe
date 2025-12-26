@@ -1,7 +1,12 @@
-// app.js — AUTOPLAY-FIX + KULANTE KORREKTUR
-// - Audio startet erst nach erster User-Interaktion (Autoplay-Blockade gelöst)
-// - Korrektur ist kulanter: fehlende Abstände, Bindestriche, Apostroph-Varianten, Akzente (ê/é/ç) werden toleriert.
-//   Beispiel: "astu" ≈ "as-tu", "est ce que" ≈ "est-ce que", "jai" ≈ "j'ai", "vous etes" ≈ "vous êtes"
+// app.js — AUTOPLAY-FIX + ULTRA-KULANTE KORREKTUR
+// Akzeptiert:
+/*
+ - fehlende Abstände / Bindestriche / Apostrophe
+ - fehlende Akzente
+ - oe / oeu / oe / o / e Varianten (z.B. soeur / soeuer / soer)
+ - optionale Artikel bei Nomen (la soeur = soeur)
+ - kontextuell äquivalente Formen (Singular mit/ohne Artikel)
+*/
 
 const ROUND_SIZE = 25;
 const NEED_ROUNDS = 5;
@@ -22,7 +27,7 @@ let answeredTotal = 0;
 let correctTotal = 0;
 let lastMusicTier = 0;
 
-// ---------- AUTOPLAY UNLOCK ----------
+/* ---------- AUDIO UNLOCK ---------- */
 function unlockAudio(){
   if (audioUnlocked) return;
   audioUnlocked = true;
@@ -31,8 +36,8 @@ function unlockAudio(){
 }
 document.addEventListener("click", unlockAudio);
 document.addEventListener("keydown", unlockAudio);
-// ------------------------------------
 
+/* ---------- UTIL ---------- */
 function shuffle(arr){
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -41,88 +46,48 @@ function shuffle(arr){
   return arr;
 }
 
-/* ---------- NORMALISIERUNG (STRICT) ---------- */
-function normalize(s){
-  return (s || "")
-    .trim()
-    .replace(/\s+/g," ")
-    .replace(/[’]/g,"'"); // normalize apostrophe
-}
-
-/* ---------- NORMALISIERUNG (KULANT) ----------
-   Ziel: Tippfehler "fehlende Abstände" / "fehlende Bindestriche" / "Apostroph-Varianten" / "Akzente" tolerieren.
-   - entfernt Diakritika (êtes -> etes)
-   - entfernt Leerzeichen, Bindestriche, Apostrophe, Punkte, Kommas, Fragezeichen etc.
-*/
 function stripDiacritics(s){
-  // NFD zerlegt Akzente, dann werden Combining Marks entfernt
   return (s || "")
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+    .replace(/[\u0300-\u036f]/g,"");
 }
 
-function normalizeLoose(s){
-  let x = normalize(s).toLowerCase();
+/* ---------- ULTRA-NORMALISIERUNG ---------- */
+function ultraNormalize(s){
+  let x = (s || "").toLowerCase().trim();
+
+  // vereinheitliche Apostrophe & Bindestriche
+  x = x.replace(/[’']/g,"");
+  x = x.replace(/-/g,"");
+
+  // Akzente entfernen
   x = stripDiacritics(x);
-  // vereinheitliche typische Varianten
-  x = x.replace(/’/g,"'");
-  // entferne alle Trennzeichen/Interpunktion inkl. Leerzeichen
-  x = x.replace(/[\s\-’'’.,;:!?()]/g, "");
+
+  // oe/oeu/o/e Varianten
+  x = x.replace(/oeu/g,"oe");
+  x = x.replace(/oe/g,"o");
+
+  // Artikel optional (la/le/les/un/une/des)
+  x = x.replace(/\b(la|le|les|un|une|des)\b/g,"");
+
+  // Leerzeichen & Satzzeichen entfernen
+  x = x.replace(/[\s.,;:!?()]/g,"");
+
   return x;
 }
 
-/* ---------- VARIANTEN / "SYNONYME" (ORTHOGRAPHISCH) ----------
-   Hier geht es NICHT um echte Wort-Synonyme (das wäre datenbasiert),
-   sondern um zulässige Schreibvarianten derselben Form:
-   - est-ce que / est ce que
-   - as-tu / as tu / astu
-   - j'ai / j ai / jai
-   - l’ / l'
-*/
-function generateOrthVariants(expected){
-  const e = (expected || "").trim();
-  const vars = new Set();
-  vars.add(e);
+/* ---------- KORREKTUR ---------- */
+function isCorrect(user, expected){
+  if (!user) return false;
 
-  // typographische Apostrophe
-  vars.add(e.replace(/[’]/g,"'"));
-  vars.add(e.replace(/[']/g,"’"));
+  const u = ultraNormalize(user);
+  const e = ultraNormalize(expected);
 
-  // "est-ce que" ohne Bindestriche
-  vars.add(e.replace(/est-ce que/gi, "est ce que"));
-  vars.add(e.replace(/est ce que/gi, "est-ce que"));
+  // 1) direkt
+  if (u === e) return true;
 
-  // "est-ce qu’" Varianten
-  vars.add(e.replace(/est-ce qu[’']/gi, "est ce qu'"));
-  vars.add(e.replace(/est ce qu[’']/gi, "est-ce qu’"));
-
-  // Inversion: as-tu -> as tu
-  vars.add(e.replace(/-+/g," "));
-  // Mehrfachspaces glätten
-  const more = Array.from(vars).map(v => normalize(v));
-  more.forEach(v => vars.add(v));
-
-  return Array.from(vars);
-}
-
-function isCorrect(userInput, expected){
-  const userStrict = normalize(userInput);
-  const expStrict = normalize(expected);
-
-  // 1) exakt (nach deiner bisherigen Normalisierung)
-  if (userStrict === expStrict) return true;
-
-  // 2) orthographische Varianten (Bindestrich/Apostroph)
-  const variants = generateOrthVariants(expected);
-  for (const v of variants){
-    if (normalize(userInput) === normalize(v)) return true;
-  }
-
-  // 3) kulant: ignoriert Abstände/Bindestriche/Apostrophe/Interpunktion/AKZENTE
-  const userLoose = normalizeLoose(userInput);
-  for (const v of variants){
-    if (userLoose === normalizeLoose(v)) return true;
-  }
+  // 2) erlaube fehlenden Artikel (z.B. "soeur" statt "la soeur")
+  if (u === e.replace(/^(la|le|les|un|une|des)/,"")) return true;
 
   return false;
 }
@@ -148,7 +113,6 @@ function updateMusic(ratePercent){
     $("audioHint").textContent = "";
     return;
   }
-
   const tiers = [
     {t:90, id:"audio90", label:"La Marseillaise"},
     {t:80, id:"audio80", label:"Mon mec à moi"},
@@ -157,35 +121,23 @@ function updateMusic(ratePercent){
     {t:50, id:"audio50", label:"Sur le pont d'Avignon"},
   ];
   let tier = 0;
-  for (const x of tiers){
-    if (ratePercent >= x.t){ tier = x.t; break; }
-  }
-
+  for (const x of tiers){ if (ratePercent >= x.t){ tier = x.t; break; } }
   if (tier !== lastMusicTier){
     ["audio50","audio60","audio70","audio80","audio90"].forEach(id=>{
-      const a=$(id);
-      try{ a.pause(); a.currentTime=0; }catch(e){}
+      const a=$(id); try{ a.pause(); a.currentTime=0; }catch(e){}
     });
     lastMusicTier = tier;
     const chosen = tiers.find(x=>x.t===tier);
     if (!chosen) return;
-
-    const a = $(chosen.id);
+    const a=$(chosen.id);
     a.volume = 0.8;
     a.play().then(()=>{
       $("audioHint").textContent = "🎵 " + chosen.label + " (" + tier + "%+)";
-    }).catch(()=>{
-      // Autoplay-Fehler wird nicht mehr angezeigt (weil wir vorher unlocken),
-      // aber falls dennoch: still bleiben.
-      $("audioHint").textContent = "";
-    });
+    }).catch(()=>{ $("audioHint").textContent = ""; });
   }
 }
 
-function rebuildCycleQueue(){
-  cycleQueue = shuffle(pool.slice());
-}
-
+function rebuildCycleQueue(){ cycleQueue = shuffle(pool.slice()); }
 function pickRoundSet(){
   if (cycleQueue.length === 0) rebuildCycleQueue();
   if (cycleQueue.length < Math.min(ROUND_SIZE, pool.length)) rebuildCycleQueue();
@@ -197,21 +149,12 @@ function startLevel(lvl){
   pool = (level === 1) ? LEVEL1.slice() : LEVEL2.slice();
   shuffle(pool);
   rebuildCycleQueue();
-
-  roundIndex = 0;
-  goodRounds = 0;
-  qIndex = 0;
-  answeredTotal = 0;
-  correctTotal = 0;
-  lastMusicTier = 0;
+  roundIndex = 0; goodRounds = 0; qIndex = 0;
+  answeredTotal = 0; correctTotal = 0; lastMusicTier = 0;
   startRound();
 }
 
-function startRound(){
-  roundSet = pickRoundSet();
-  qIndex = 0;
-  showQuestion();
-}
+function startRound(){ roundSet = pickRoundSet(); qIndex = 0; showQuestion(); }
 
 function showQuestion(){
   const item = roundSet[qIndex];
@@ -227,17 +170,13 @@ function showQuestion(){
 
 function checkAnswer(){
   const item = roundSet[qIndex];
-  const user = $("answer").value;
-  const expected = item.fr;
   answeredTotal += 1;
-
-  if (isCorrect(user, expected)){
+  if (isCorrect($("answer").value, item.fr)){
     correctTotal += 1;
     setFeedback("✓ korrekt", "good");
   } else {
-    setFeedback("✗ falsch<br><small>Erwartet: <b>" + expected + "</b></small>", "bad");
+    setFeedback("✗ falsch<br><small>Erwartet: <b>"+item.fr+"</b></small>", "bad");
   }
-
   $("answer").disabled = true;
   $("btnCheck").disabled = true;
   $("btnNext").disabled = false;
@@ -246,38 +185,22 @@ function checkAnswer(){
 
 function next(){
   qIndex += 1;
-  if (qIndex < roundSet.length){
-    showQuestion();
-    return;
-  }
-
+  if (qIndex < roundSet.length){ showQuestion(); return; }
   const roundAnswered = roundSet.length;
   const roundCorrect = correctTotal - (answeredTotal - roundAnswered);
   const roundRate = roundAnswered ? (roundCorrect / roundAnswered) : 0;
-
   if (level === 1){
     if (roundRate >= NEED_RATE) goodRounds += 1;
     roundIndex += 1;
-
     if (roundIndex >= NEED_ROUNDS){
-      if (goodRounds >= NEED_ROUNDS){
-        startLevel(2);
-        return;
-      } else {
-        roundIndex = 0;
-        goodRounds = 0;
-        rebuildCycleQueue();
-      }
+      if (goodRounds >= NEED_ROUNDS){ startLevel(2); return; }
+      roundIndex = 0; goodRounds = 0; rebuildCycleQueue();
     }
     startRound();
-  } else {
-    startRound();
-  }
+  } else startRound();
 }
 
-function resetAll(){
-  startLevel(1);
-}
+function resetAll(){ startLevel(1); }
 
 $("btnCheck").addEventListener("click", checkAnswer);
 $("btnNext").addEventListener("click", next);
@@ -287,21 +210,16 @@ $("answer").addEventListener("keydown", (e)=>{
     else if (!$("btnNext").disabled) next();
   }
 });
-
 $("btnReset").addEventListener("click", resetAll);
 $("btnTone").addEventListener("click", ()=>{
   toneOn = !toneOn;
   $("btnTone").textContent = toneOn ? "🔊 Ton an" : "🔇 Ton aus";
   if (!toneOn){
     ["audio50","audio60","audio70","audio80","audio90"].forEach(id=>{
-      const a=$(id);
-      try{ a.pause(); a.currentTime=0; }catch(e){}
+      const a=$(id); try{ a.pause(); a.currentTime=0; }catch(e){}
     });
-    lastMusicTier = 0;
-    $("audioHint").textContent = "";
-  } else {
-    updateUI();
-  }
+    lastMusicTier = 0; $("audioHint").textContent = "";
+  } else updateUI();
 });
 
 startLevel(1);
