@@ -150,7 +150,7 @@ function checkAnswer(){
   if (isCorrect($("answer").value, item.fr)){
     correctTotal += 1;
     if (/\(e\)/.test(item.fr)){
-      setFeedback("✓ korrekt <small>(maskulin / feminin akzeptiert)</small>", "good");
+      setFeedback("✓ korrekt", "good");
     } else {
       setFeedback("✓ korrekt", "good");
     }
@@ -159,7 +159,7 @@ function checkAnswer(){
     if (/\(e\)/.test(sol)){
       sol = expandEVariants(sol).join(" / ");
     }
-    setFeedback("✗ falsch<br><small>Erwartet: <b>"+sol+"</b></small>", "bad");
+    setFeedback("✗ falsch<br><small>Erwartet: <b>"+item.fr.replace(/\(e\)/g,"")+"</b></small>", "bad");
   }
   $("answer").disabled = true;
   $("btnCheck").disabled = true;
