@@ -1,12 +1,9 @@
-// app.js — AUTOPLAY-FIX + ULTRA-KULANTE KORREKTUR
-// Akzeptiert:
-/*
- - fehlende Abstände / Bindestriche / Apostrophe
- - fehlende Akzente
- - oe / oeu / oe / o / e Varianten (z.B. soeur / soeuer / soer)
- - optionale Artikel bei Nomen (la soeur = soeur)
- - kontextuell äquivalente Formen (Singular mit/ohne Artikel)
-*/
+// app.js — KORREKTURLOGIK MIT KONTEXT
+// - Autoplay-Fix
+// - Ultra-kulante Orthografie
+// - (e)-Formen akzeptiert mit explizitem Feedback
+// - Präpositionen optional, wenn nicht verlangt
+// - KEINE semantische Gleichsetzung bei Wetter-Ausdrücken (il fait ... ist zwingend)
 
 const ROUND_SIZE = 25;
 const NEED_ROUNDS = 5;
@@ -27,7 +24,7 @@ let answeredTotal = 0;
 let correctTotal = 0;
 let lastMusicTier = 0;
 
-/* ---------- AUDIO UNLOCK ---------- */
+/* AUDIO UNLOCK */
 function unlockAudio(){
   if (audioUnlocked) return;
   audioUnlocked = true;
@@ -37,7 +34,7 @@ function unlockAudio(){
 document.addEventListener("click", unlockAudio);
 document.addEventListener("keydown", unlockAudio);
 
-/* ---------- UTIL ---------- */
+/* UTIL */
 function shuffle(arr){
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -47,73 +44,29 @@ function shuffle(arr){
 }
 
 function stripDiacritics(s){
-  return (s || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g,"");
+  return (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"");
 }
 
-
-// optionale Präpositionen (werden ignoriert, wenn nicht angegeben)
-const OPTIONAL_PREPS = ["a","à","au","aux","de","du","des","en","sur","avec","sans","pour","chez"];
-
-function stripOptionalPreps(x){
-  let y = x;
-  OPTIONAL_PREPS.forEach(p=>{
-    y = y.replace(new RegExp("^"+p, "g"), "");
-  });
-  return y;
+function expandEVariants(s){
+  if (!/\(e\)/.test(s)) return [s];
+  return [s.replace(/\(e\)/g,""), s.replace(/\(e\)/g,"e")];
 }
 
-/* ---------- ULTRA-NORMALISIERUNG ---------- */
+/* ULTRA NORMALIZE */
 function ultraNormalize(s){
   let x = (s || "").toLowerCase().trim();
-
-  // vereinheitliche Apostrophe & Bindestriche
-  x = x.replace(/[’']/g,"");
-  x = x.replace(/-/g,"");
-
-  // Akzente entfernen
   x = stripDiacritics(x);
-
-  // oe/oeu/o/e Varianten
-  x = x.replace(/oeu/g,"oe");
-  x = x.replace(/oe/g,"o");
-
-  // Artikel optional (la/le/les/un/une/des)
-  x = x.replace(/\b(la|le|les|un|une|des)\b/g,"");
-
-  // Leerzeichen & Satzzeichen entfernen
+  x = x.replace(/[’']/g,"").replace(/-/g,"");
+  x = x.replace(/oeu/g,"oe").replace(/oe/g,"o");
+  x = x.replace(/\b(la|le|les|un|une|des|de|du|aux|au|a|à|en|sur|avec|sans|pour|chez)\b/g,"");
   x = x.replace(/[\s.,;:!?()]/g,"");
-
-  x = stripOptionalPreps(x);
   return x;
 }
 
-
-/* ---------- (e)-VARIANTEN ----------
-   Akzeptiert fatigué / fatiguée, content / contente etc.
-*/
-function expandEVariants(s){
-  if (!s) return [];
-  const base = s;
-  const variants = new Set();
-  variants.add(base);
-  // fatigué(e) -> fatigué, fatiguée
-  if (/\(e\)/.test(base)){
-    variants.add(base.replace(/\(e\)/g,""));
-    variants.add(base.replace(/\(e\)/g,"e"));
-  }
-  return Array.from(variants);
-}
-
-/* ---------- KORREKTUR ---------- */
+/* KORREKTUR */
 function isCorrect(user, expected){
-  const expVars = expandEVariants(expected);
-
-  if (!user) return false;
-
   const u = ultraNormalize(user);
-  for (const ev of expVars){
+  for (const ev of expandEVariants(expected)){
     const e = ultraNormalize(ev);
     if (u === e) return true;
   }
@@ -137,10 +90,7 @@ function updateUI(){
 }
 
 function updateMusic(ratePercent){
-  if (!toneOn || !audioUnlocked){
-    $("audioHint").textContent = "";
-    return;
-  }
+  if (!toneOn || !audioUnlocked){ $("audioHint").textContent = ""; return; }
   const tiers = [
     {t:90, id:"audio90", label:"La Marseillaise"},
     {t:80, id:"audio80", label:"Mon mec à moi"},
@@ -157,8 +107,7 @@ function updateMusic(ratePercent){
     lastMusicTier = tier;
     const chosen = tiers.find(x=>x.t===tier);
     if (!chosen) return;
-    const a=$(chosen.id);
-    a.volume = 0.8;
+    const a=$(chosen.id); a.volume = 0.8;
     a.play().then(()=>{
       $("audioHint").textContent = "🎵 " + chosen.label + " (" + tier + "%+)";
     }).catch(()=>{ $("audioHint").textContent = ""; });
@@ -175,8 +124,7 @@ function pickRoundSet(){
 function startLevel(lvl){
   level = lvl;
   pool = (level === 1) ? LEVEL1.slice() : LEVEL2.slice();
-  shuffle(pool);
-  rebuildCycleQueue();
+  shuffle(pool); rebuildCycleQueue();
   roundIndex = 0; goodRounds = 0; qIndex = 0;
   answeredTotal = 0; correctTotal = 0; lastMusicTier = 0;
   startRound();
@@ -201,18 +149,17 @@ function checkAnswer(){
   answeredTotal += 1;
   if (isCorrect($("answer").value, item.fr)){
     correctTotal += 1;
-    if (/\(e\)/.test(item.fr)) {
+    if (/\(e\)/.test(item.fr)){
       setFeedback("✓ korrekt <small>(maskulin / feminin akzeptiert)</small>", "good");
     } else {
       setFeedback("✓ korrekt", "good");
     }
   } else {
     let sol = item.fr;
-  if (/\(e\)/.test(sol)){
-    const vs = expandEVariants(sol).filter(v=>!v.includes("(e)"));
-    sol = vs.join(" / ");
-  }
-  setFeedback("✗ falsch<br><small>Erwartet: <b>"+sol+"</b></small>", "bad");
+    if (/\(e\)/.test(sol)){
+      sol = expandEVariants(sol).join(" / ");
+    }
+    setFeedback("✗ falsch<br><small>Erwartet: <b>"+sol+"</b></small>", "bad");
   }
   $("answer").disabled = true;
   $("btnCheck").disabled = true;
