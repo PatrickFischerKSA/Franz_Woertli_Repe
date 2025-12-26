@@ -108,24 +108,26 @@ const SEMANTIC_FR_EQUIV = {
 
 
 
-/* ---------- HANDLUNGSÄQUIVALENZEN (gehen + Tätigkeit) ----------
-   Deutsch: "ich gehe einkaufen"
-   Französisch korrekt:
-     - je fais les courses (idiomatisch)
-     - je vais acheter (periphrastisch)
+/* ---------- DE → FR HANDLUNGSMUSTER (gehen + Tätigkeit) ----------
+   Wenn das deutsche Prompt ein "gehen + Verb" ausdrückt,
+   sind folgende französische Formen korrekt:
+   - idiomatische Form (Ziel)
+   - aller + infinitif
 */
-const ACTION_EQUIV = {
-  "je fais les courses": ["je vais acheter"],
-  "je vais acheter": ["je fais les courses"]
+const DE_ACTION_EQUIV = {
+  "ich gehe einkaufen.": [
+    "je fais les courses",
+    "je vais acheter",
+    "je vais faire les courses"
+  ]
 };
 
-function actionMatch(u, expected){
-  const key = ultraNormalize(expected);
-  if (!ACTION_EQUIV[key]) return false;
-  for (const alt of ACTION_EQUIV[key]){
+function deActionMatch(u, dePrompt){
+  const key = (dePrompt || "").toLowerCase().trim();
+  if (!DE_ACTION_EQUIV[key]) return false;
+  for (const alt of DE_ACTION_EQUIV[key]){
     if (u === ultraNormalize(alt)) return true;
   }
-  if (actionMatch(u, expected)) return true;
   return false;
 }
 
@@ -146,46 +148,42 @@ function idiomMatch(uNorm, expected){
   for (const alt of SEMANTIC_IDIOMS[key]){
     if (uNorm === ultraNormalize(alt)) return true;
   }
-  if (actionMatch(u, expected)) return true;
   return false;
 }
 
 /* KORREKTUR */
 
+
 function isCorrect(user, expected, promptDe){
   const userRaw = (user || "");
-  const uArt = extractLeadingArticle(userRaw);
   const u = ultraNormalize(userRaw);
 
-  // Kandidaten sammeln: expected (+ (e)-Varianten) + Item-Alternativen + DE-Map
-  const candidates = [];
+  // 0) DE-getriggerte Handlungsmuster (gehen + Tätigkeit)
+  if (deActionMatch(u, promptDe)) return true;
 
+  // 1) direkte Lösung (+ (e)-Varianten)
   for (const ev of expandEVariants(expected)){
-    candidates.push(ev);
+    if (u === ultraNormalize(ev)) return true;
   }
 
+  // 2) Item-spezifische Alternativen
   if (Array.isArray(this?.frAlt)){
-    for (const alt of this.frAlt) candidates.push(alt);
+    for (const alt of this.frAlt){
+      if (u === ultraNormalize(alt)) return true;
+    }
   }
 
+  // 3) Deutsche Prompt-abhängige Entsprechungen
   const key = (promptDe || "").toLowerCase();
   if (SEMANTIC_FR_EQUIV && SEMANTIC_FR_EQUIV[key]){
-    for (const alt of SEMANTIC_FR_EQUIV[key]) candidates.push(alt);
+    for (const alt of SEMANTIC_FR_EQUIV[key]){
+      if (u === ultraNormalize(alt)) return true;
+    }
   }
 
-  // Prüfen
-  for (const cand of candidates){
-    const cArt = extractLeadingArticle(cand);
-    // Wenn User einen Artikel schreibt UND Kandidat einen Artikel hat: muss matchen
-    if (uArt && cArt && uArt !== cArt) continue;
-
-    if (u === ultraNormalize(cand)) return true;
-    if (idiomMatch(u, expected)) return true;
-  }
-
-  if (actionMatch(u, expected)) return true;
   return false;
 }
+
 
 
 function setFeedback(html, cls){
