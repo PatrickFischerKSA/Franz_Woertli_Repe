@@ -106,6 +106,27 @@ const SEMANTIC_FR_EQUIV = {
   "schauen": ["regarder","voir"]
 };
 
+
+/* ---------- IDIOMATISCHE ÄQUIVALENZEN ----------
+   Feste Wendungen mit mehreren idiomatisch korrekten Formen.
+   Beispiel:
+     Wie geht's? -> "Ça va ?" (Ziel)
+                   "Comment ça va ?" (auch korrekt)
+*/
+const SEMANTIC_IDIOMS = {
+  "ça va ?": ["comment ça va ?"],
+  "ca va ?": ["comment ca va ?"]
+};
+
+function idiomMatch(uNorm, expected){
+  const key = ultraNormalize(expected + "?");
+  if (!SEMANTIC_IDIOMS[key]) return false;
+  for (const alt of SEMANTIC_IDIOMS[key]){
+    if (uNorm === ultraNormalize(alt)) return true;
+  }
+  return false;
+}
+
 /* KORREKTUR */
 
 function isCorrect(user, expected, promptDe){
@@ -136,6 +157,7 @@ function isCorrect(user, expected, promptDe){
     if (uArt && cArt && uArt !== cArt) continue;
 
     if (u === ultraNormalize(cand)) return true;
+    if (idiomMatch(u, expected)) return true;
   }
 
   return false;
