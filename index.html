@@ -2,23 +2,40 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Deutsch → Französisch – Quiz Engine</title>
+<title>Quiz – Level 1 (Band 6 + 7)</title>
 <style>
-body{font-family:system-ui,sans-serif;background:#f6f6f6;padding:2rem}
-.card{background:#fff;padding:2rem;max-width:900px;margin:auto;border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.15)}
+body{font-family:Arial, sans-serif; max-width:700px; margin:auto;}
+.correct{color:green;}
+.wrong{color:red;}
 </style>
 </head>
 <body>
-<div class="card">
-<h1>Quiz-Engine</h1>
-<p>Diese Datei ist eine <strong>stabile, offline lauffähige Quiz-Engine</strong>.</p>
-<ul>
-<li>25 Aufgaben pro Spiel</li>
-<li>5× ≥ 80 % → Level 2</li>
-<li>Reset-Funktion</li>
-<li>Musiklogik 50–90 % vorbereitet</li>
-</ul>
-<p>Diese ZIP-Version ist absichtlich klein gehalten, damit der Download zuverlässig funktioniert.</p>
-</div>
+<h1>Deutsch → Französisch (Level 1 – Band 6 & 7)</h1>
+<p id="prompt"></p>
+<input id="answer" autocomplete="off">
+<button onclick="check()">OK</button>
+<p id="feedback"></p>
+<script src="data.js"></script>
+<script>
+let i = 0;
+VOCAB.sort(()=>Math.random()-0.5);
+function show(){
+  document.getElementById('prompt').innerText = VOCAB[i].de;
+  document.getElementById('answer').value='';
+  document.getElementById('feedback').innerText='';
+}
+function check(){
+  const a = document.getElementById('answer').value.trim();
+  if(a===VOCAB[i].fr){
+    document.getElementById('feedback').innerHTML='<span class="correct">✓ korrekt</span>';
+    i++;
+    if(i<VOCAB.length){setTimeout(show,600);}
+    else{document.getElementById('prompt').innerText='Fertig.';}
+  } else {
+    document.getElementById('feedback').innerHTML='<span class="wrong">✗ falsch</span>';
+  }
+}
+show();
+</script>
 </body>
 </html>
