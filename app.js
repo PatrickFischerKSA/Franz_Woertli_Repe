@@ -250,7 +250,7 @@ function checkAnswer(){
     if (/\(e\)/.test(sol)){
       sol = expandEVariants(sol).join(" / ");
     }
-    setFeedback("✗ falsch<br><small>Erwartet: <b>"+item.fr+"</b></small>", "bad");
+    setFeedback("✗ falsch<br><small>Erwartet: <b>"+item.fr.replace(/\(e\)/g,"")+"</b></small>", "bad");
   }
   $("answer").disabled = true;
   $("btnCheck").disabled = true;
