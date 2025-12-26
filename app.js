@@ -107,6 +107,28 @@ const SEMANTIC_FR_EQUIV = {
 };
 
 
+
+/* ---------- HANDLUNGSÄQUIVALENZEN (gehen + Tätigkeit) ----------
+   Deutsch: "ich gehe einkaufen"
+   Französisch korrekt:
+     - je fais les courses (idiomatisch)
+     - je vais acheter (periphrastisch)
+*/
+const ACTION_EQUIV = {
+  "je fais les courses": ["je vais acheter"],
+  "je vais acheter": ["je fais les courses"]
+};
+
+function actionMatch(u, expected){
+  const key = ultraNormalize(expected);
+  if (!ACTION_EQUIV[key]) return false;
+  for (const alt of ACTION_EQUIV[key]){
+    if (u === ultraNormalize(alt)) return true;
+  }
+  if (actionMatch(u, expected)) return true;
+  return false;
+}
+
 /* ---------- IDIOMATISCHE ÄQUIVALENZEN ----------
    Feste Wendungen mit mehreren idiomatisch korrekten Formen.
    Beispiel:
@@ -124,6 +146,7 @@ function idiomMatch(uNorm, expected){
   for (const alt of SEMANTIC_IDIOMS[key]){
     if (uNorm === ultraNormalize(alt)) return true;
   }
+  if (actionMatch(u, expected)) return true;
   return false;
 }
 
@@ -160,6 +183,7 @@ function isCorrect(user, expected, promptDe){
     if (idiomMatch(u, expected)) return true;
   }
 
+  if (actionMatch(u, expected)) return true;
   return false;
 }
 
