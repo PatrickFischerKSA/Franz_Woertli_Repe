@@ -63,12 +63,46 @@ function ultraNormalize(s){
   return x;
 }
 
+
+/* ---------- MEHRERE FRANZÖSISCHE ENTSPRECHUNGEN ----------
+   Deutsche Wörter mit mehreren zulässigen französischen Entsprechungen.
+   Beispiel: lieben -> aimer / adorer
+   Mechanismus:
+   - global über SEMANTIC_FR_EQUIV (nach deutschem Prompt)
+   - oder pro Item via item.frAlt = ["aimer","adorer"]
+*/
+const SEMANTIC_FR_EQUIV = {
+  "lieben": ["aimer","adorer"],
+  "mögen": ["aimer","bien aimer"],
+  "beginnen": ["commencer","débuter"],
+  "aufhören": ["arrêter","cesser"],
+  "denken": ["penser","croire"],
+  "sagen": ["dire","raconter"],
+  "schauen": ["regarder","voir"]
+};
+
 /* KORREKTUR */
-function isCorrect(user, expected){
+function isCorrect(user, expected, promptDe){
   const u = ultraNormalize(user);
+
+  // 1) direkte Lösung (+ (e)-Varianten)
   for (const ev of expandEVariants(expected)){
-    const e = ultraNormalize(ev);
-    if (u === e) return true;
+    if (u === ultraNormalize(ev)) return true;
+  }
+
+  // 2) Item-spezifische Alternativen
+  if (Array.isArray(this?.frAlt)){
+    for (const alt of this.frAlt){
+      if (u === ultraNormalize(alt)) return true;
+    }
+  }
+
+  // 3) Deutsche Prompt-abhängige Entsprechungen
+  const key = (promptDe || "").toLowerCase();
+  if (SEMANTIC_FR_EQUIV[key]){
+    for (const alt of SEMANTIC_FR_EQUIV[key]){
+      if (u === ultraNormalize(alt)) return true;
+    }
   }
   return false;
 }
@@ -147,7 +181,7 @@ function showQuestion(){
 function checkAnswer(){
   const item = roundSet[qIndex];
   answeredTotal += 1;
-  if (isCorrect($("answer").value, item.fr)){
+  if (isCorrect.call(item, $("answer").value, item.fr, item.de)){
     correctTotal += 1;
     if (/\(e\)/.test(item.fr)){
       setFeedback("✓ korrekt", "good");
