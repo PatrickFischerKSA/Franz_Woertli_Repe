@@ -1,5 +1,6 @@
+// app.js — AUTOPLAY-FIX INKLUSIVE
+// Änderung: Audio startet erst nach erster User-Interaktion
 
-// No modules. Offline.
 const ROUND_SIZE = 25;
 const NEED_ROUNDS = 5;
 const NEED_RATE = 0.80;
@@ -7,15 +8,26 @@ const NEED_RATE = 0.80;
 const $ = (id) => document.getElementById(id);
 
 let toneOn = false;
+let audioUnlocked = false;
 let level = 1;
-let roundIndex = 0;          // 0..4 (Level 1)
-let goodRounds = 0;          // rounds with >=80%
-let pool = [];               // full pool for current level
-let roundSet = [];           // 25 selected items for the round
+let roundIndex = 0;
+let goodRounds = 0;
+let pool = [];
+let cycleQueue = [];
+let roundSet = [];
 let qIndex = 0;
 let answeredTotal = 0;
 let correctTotal = 0;
 let lastMusicTier = 0;
+
+function unlockAudio(){
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+  document.removeEventListener("click", unlockAudio);
+  document.removeEventListener("keydown", unlockAudio);
+}
+document.addEventListener("click", unlockAudio);
+document.addEventListener("keydown", unlockAudio);
 
 function shuffle(arr){
   for (let i = arr.length - 1; i > 0; i--) {
@@ -29,7 +41,7 @@ function normalize(s){
   return (s || "")
     .trim()
     .replace(/\s+/g," ")
-    .replace(/[’]/g,"'"); // normalize apostrophe
+    .replace(/[’]/g,"'");
 }
 
 function setFeedback(html, cls){
@@ -49,7 +61,11 @@ function updateUI(){
 }
 
 function updateMusic(ratePercent){
-  // thresholds 50/60/70/80/90
+  if (!toneOn || !audioUnlocked){
+    $("audioHint").textContent = "";
+    return;
+  }
+
   const tiers = [
     {t:90, id:"audio90", label:"La Marseillaise"},
     {t:80, id:"audio80", label:"Mon mec à moi"},
@@ -61,47 +77,42 @@ function updateMusic(ratePercent){
   for (const x of tiers){
     if (ratePercent >= x.t){ tier = x.t; break; }
   }
-  if (!toneOn){
-    $("audioHint").textContent = "";
-    return;
-  }
+
   if (tier !== lastMusicTier){
-    // stop all first
     ["audio50","audio60","audio70","audio80","audio90"].forEach(id=>{
       const a=$(id);
       try{ a.pause(); a.currentTime=0; }catch(e){}
     });
     lastMusicTier = tier;
     const chosen = tiers.find(x=>x.t===tier);
-    if (!chosen){
-      $("audioHint").textContent = "";
-      return;
-    }
+    if (!chosen) return;
+
     const a = $(chosen.id);
     a.volume = 0.8;
     a.play().then(()=>{
       $("audioHint").textContent = "🎵 " + chosen.label + " (" + tier + "%+)";
     }).catch(()=>{
-      // audio file missing or blocked
-      $("audioHint").textContent = "🎵 " + chosen.label + " (" + tier + "%+) – Audio-Datei fehlt oder Browser blockiert Autoplay.";
+      $("audioHint").textContent = "";
     });
   }
 }
 
+function rebuildCycleQueue(){
+  cycleQueue = shuffle(pool.slice());
+}
+
 function pickRoundSet(){
-  // pick 25 unique from pool; if pool smaller, use all
-  const cloned = shuffle(pool.slice());
-  return cloned.slice(0, Math.min(ROUND_SIZE, cloned.length));
+  if (cycleQueue.length === 0) rebuildCycleQueue();
+  if (cycleQueue.length < Math.min(ROUND_SIZE, pool.length)) rebuildCycleQueue();
+  return cycleQueue.splice(0, Math.min(ROUND_SIZE, pool.length));
 }
 
 function startLevel(lvl){
   level = lvl;
-  if (level === 1){
-    pool = LEVEL1.slice();
-  } else {
-    pool = LEVEL2.slice();
-  }
+  pool = (level === 1) ? LEVEL1.slice() : LEVEL2.slice();
   shuffle(pool);
+  rebuildCycleQueue();
+
   roundIndex = 0;
   goodRounds = 0;
   qIndex = 0;
@@ -154,9 +165,9 @@ function next(){
     showQuestion();
     return;
   }
-  // round finished
+
   const roundAnswered = roundSet.length;
-  const roundCorrect = correctTotal - (answeredTotal - roundAnswered); // correct in this round
+  const roundCorrect = correctTotal - (answeredTotal - roundAnswered);
   const roundRate = roundAnswered ? (roundCorrect / roundAnswered) : 0;
 
   if (level === 1){
@@ -164,26 +175,17 @@ function next(){
     roundIndex += 1;
 
     if (roundIndex >= NEED_ROUNDS){
-      // Level 1 cycle finished
       if (goodRounds >= NEED_ROUNDS){
-        // go level 2 only if data exists
-        if (LEVEL2.length === 0){
-          $("prompt").textContent = "Level 1 abgeschlossen. Level 2 ist leer (Transferliste fehlt).";
-          setFeedback("Bitte liefere die Transferliste für Level 2, dann baue ich sie ein.", "");
-          $("btnNext").disabled = true;
-          return;
-        }
         startLevel(2);
         return;
       } else {
-        // restart Level 1 cycles
         roundIndex = 0;
         goodRounds = 0;
+        rebuildCycleQueue();
       }
     }
     startRound();
   } else {
-    // level 2: just loop rounds
     startRound();
   }
 }
@@ -205,7 +207,6 @@ $("btnReset").addEventListener("click", resetAll);
 $("btnTone").addEventListener("click", ()=>{
   toneOn = !toneOn;
   $("btnTone").textContent = toneOn ? "🔊 Ton an" : "🔇 Ton aus";
-  // stop if turning off
   if (!toneOn){
     ["audio50","audio60","audio70","audio80","audio90"].forEach(id=>{
       const a=$(id);
@@ -218,5 +219,4 @@ $("btnTone").addEventListener("click", ()=>{
   }
 });
 
-// boot
 startLevel(1);
