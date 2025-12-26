@@ -72,6 +72,9 @@ function ultraNormalize(s){
    - oder pro Item via item.frAlt = ["aimer","adorer"]
 */
 const SEMANTIC_FR_EQUIV = {
+  "zu früh": ["en avance","trop tôt"],
+  "zu spät": ["en retard","trop tard"],
+
   "lieben": ["aimer","adorer"],
   "mögen": ["aimer","bien aimer"],
   "beginnen": ["commencer","débuter"],
@@ -184,16 +187,16 @@ function checkAnswer(){
   if (isCorrect.call(item, $("answer").value, item.fr, item.de)){
     correctTotal += 1;
     if (/\(e\)/.test(item.fr)){
-      setFeedback("✓ korrekt", "good");
+      setFeedback("✓ korrekt <small>(Ziel: " + item.fr + ")</small>", "good");
     } else {
-      setFeedback("✓ korrekt", "good");
+      setFeedback("✓ korrekt <small>(Ziel: " + item.fr + ")</small>", "good");
     }
   } else {
     let sol = item.fr;
     if (/\(e\)/.test(sol)){
       sol = expandEVariants(sol).join(" / ");
     }
-    setFeedback("✗ falsch<br><small>Erwartet: <b>"+item.fr.replace(/\(e\)/g,"")+"</b></small>", "bad");
+    setFeedback("✗ falsch<br><small>Erwartet: <b>"+item.fr+"</b></small>", "bad");
   }
   $("answer").disabled = true;
   $("btnCheck").disabled = true;
