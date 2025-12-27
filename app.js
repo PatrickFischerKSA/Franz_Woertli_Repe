@@ -283,7 +283,7 @@ function startRound(){ roundSet = pickRoundSet(); qIndex = 0; showQuestion(); }
 
 function showQuestion(){
   const item = roundSet[qIndex];
-  $("prompt").textContent = (item.de && item.de.includes(" – ")) ? item.de.split(" – ").slice(-1)[0].trim() : item.de;
+  $("prompt").textContent = item.de;
   $("answer").value = "";
   $("answer").disabled = false;
   $("btnCheck").disabled = false;
@@ -359,3 +359,11 @@ $("btnTone").addEventListener("click", ()=>{
 });
 
 startLevel(1);
+
+document.addEventListener("DOMContentLoaded", ()=>{
+  document.querySelectorAll("div, p").forEach(el=>{
+    if (el.textContent && el.textContent.includes("Level 1: alle Einträge")){
+      el.remove();
+    }
+  });
+});
