@@ -1,15 +1,9 @@
-// app.js – UI-stabile Version
-// (Logik bleibt wie zuletzt definiert)
+// Minimal stabile Spiellogik – Platzhalter
+// Deine bestehende Logik kann hier ersetzt werden, falls nötig.
+// Wichtig: KEINE Platzhalter im UI.
 
 const $ = id => document.getElementById(id);
 
-// Sicherheit: Prompt immer anzeigen
-function safeSetPrompt(text){
-  const p = $("prompt");
-  if (p) p.textContent = text || "";
-}
-
-// Beispiel-Initialisierung (ersetzt NICHT deine Logik)
 document.addEventListener("DOMContentLoaded", () => {
-  safeSetPrompt("…");
+  $("prompt").textContent = "Beispiel";
 });
