@@ -1,52 +1,49 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Deutsch → Französisch – Quiz</title>
-  <link rel="stylesheet" href="style.css"/>
+  <meta charset="UTF-8" />
+  <title>Deutsch → Französisch</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <main class="card">
-    <header class="top">
-      <h1>Deutsch → Französisch</h1>
-      <div class="topbar">
-        <button id="btnTone" class="btn">🔊 Ton an</button>
-        <button id="btnReset" class="btn btn-ghost">Reset</button>
-      </div>
-      <div class="progressWrap" aria-label="Fortschritt">
-        <div id="progressBar" class="progressBar"></div>
-      </div>
-      <div class="stats">
-        <div><b>Level:</b> <span id="levelLabel">1</span></div>
-        <div><b>Runde:</b> <span id="roundLabel">1</span> / 5</div>
-        <div><b>Aufgabe:</b> <span id="qLabel">1</span> / 25</div>
-        <div><b>Trefferquote:</b> <span id="rateLabel">0%</span></div>
-      </div>
-      <p class="hint" id="audioHint"></p>
-    </header>
+    <h1>Deutsch → Französisch</h1>
 
-    <section class="qa">
-      <h2 id="prompt">…</h2>
-      <div class="row">
-        <input id="answer" type="text" autocomplete="off" spellcheck="false" placeholder="Französisch eintippen…"/>
-        <button id="btnCheck" class="btn">Antwort prüfen</button>
-      </div>
-      <div class="row">
-        <button id="btnNext" class="btn btn-ghost" disabled>Weiter</button>
-      </div>
-      <div id="feedback" class="feedback"></div>
-    </section>
+    <div class="controls">
+      <button id="btnTone">🔇 Ton aus</button>
+      <button id="btnReset">Reset</button>
+    </div>
 
-    <footer class="footer">
-      <small>Level 1: alle Einträge aus Band 6 + Band 7 (plus Band‑6‑Fortsetzung aus dem Chat). Level 2 ist absichtlich leer, bis du die Transferliste lieferst.</small>
-    </footer>
+    <div class="progress">
+      <div id="progressBar"></div>
+    </div>
 
-    <audio id="audio50" preload="none" src="audio/sur_le_pont_davignon.mp3"></audio>
-    <audio id="audio60" preload="none" src="audio/di_waeg_ton_chemin.mp3"></audio>
-    <audio id="audio70" preload="none" src="audio/je_ne_regrette_rien.mp3"></audio>
-    <audio id="audio80" preload="none" src="audio/mon_mec_a_moi.mp3"></audio>
-    <audio id="audio90" preload="none" src="audio/la_marseillaise.mp3"></audio>
+    <div class="stats">
+      <span>Level: <strong id="levelLabel">1</strong></span>
+      <span>Runde: <strong id="roundLabel">1</strong>/5</span>
+      <span>Aufgabe: <strong id="qLabel">1</strong>/25</span>
+      <span>Trefferquote: <strong id="rateLabel">0%</strong></span>
+    </div>
+
+    <div id="prompt" class="prompt">—</div>
+
+    <div class="answer-row">
+      <input id="answer" type="text" placeholder="Französisch eintippen…" />
+      <button id="btnCheck">Antwort prüfen</button>
+    </div>
+
+    <button id="btnNext" disabled>Weiter</button>
+
+    <div id="feedback" class="feedback"></div>
+
+    <div id="audioHint" class="audioHint"></div>
+
+    <audio id="audio50" src="audio/50.mp3"></audio>
+    <audio id="audio60" src="audio/60.mp3"></audio>
+    <audio id="audio70" src="audio/70.mp3"></audio>
+    <audio id="audio80" src="audio/80.mp3"></audio>
+    <audio id="audio90" src="audio/90.mp3"></audio>
   </main>
 
   <script src="data.js"></script>
