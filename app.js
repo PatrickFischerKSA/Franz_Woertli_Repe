@@ -33,6 +33,20 @@ function normalize(s){
     .replace(/[’]/g,"'"); // normalize apostrophe
 }
 
+function ultraNormalize(s){
+  return (s || "")
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/[’]/g,"'")
+    .replace(/œ/g,"oe")
+    .normalize("NFD").replace(/\p{Diacritic}/gu,"")
+    .replace(/[^a-z0-9'\s-]/g,"")
+    .replace(/\s+/g," ")
+    .trim()
+    .replace(/\s*(['-])\s*/g,"$1"); // tighten hyphen/apostrophe spacing
+}
+
 function setFeedback(html, cls){
   const el = $("feedback");
   el.className = "feedback " + (cls || "");
@@ -134,13 +148,20 @@ function showQuestion(){
 
 function checkAnswer(){
   const item = roundSet[qIndex];
-  const user = normalize($("answer").value);
+  const userRaw = $("answer").value;
+  const user = normalize(userRaw);
   const expected = normalize(item.fr);
   answeredTotal += 1;
 
-  if (user === expected){
+  const res = semanticJudge(user, item.de, item.fr);
+
+  if (res.ok){
     correctTotal += 1;
-    setFeedback("✓ korrekt", "good");
+    if (res.note){
+      setFeedback("✓ korrekt <small>(" + res.note + ")</small>", "good");
+    } else {
+      setFeedback("✓ korrekt", "good");
+    }
   } else {
     setFeedback("✗ falsch<br><small>Erwartet: <b>" + item.fr + "</b></small>", "bad");
   }
@@ -365,3 +386,93 @@ function evaluateByRules(user, promptDe){
   return null;
 }
 // ================= END REGELBASIERTE SEMANTIK =================
+
+
+function expandExpectedVariants(fr){
+  const raw = (fr || "").toString().trim();
+  // split alternatives like "a / b"
+  let parts = raw.split(/\s*\/\s*/g).map(s=>s.trim()).filter(Boolean);
+  if (parts.length===0) parts=[raw];
+  const out = new Set();
+  for (let p of parts){
+    // handle optional (e) patterns, can appear multiple times
+    // e.g., "fatigué(e)" -> "fatigué" and "fatiguée"
+    if (p.includes("(") && p.includes(")")){
+      // iterative expansion
+      let variants = [p];
+      let changed = true;
+      while(changed){
+        changed = false;
+        const next = [];
+        for (const v of variants){
+          const m = v.match(/\(([^)]+)\)/);
+          if (m){
+            changed = true;
+            next.push(v.replace(m[0], ""));       // without optional
+            next.push(v.replace(m[0], m[1]));     // with optional
+          } else {
+            next.push(v);
+          }
+        }
+        variants = next;
+      }
+      variants.forEach(v=>out.add(v));
+    } else {
+      out.add(p);
+    }
+  }
+  // also accept without trailing punctuation
+  const more = new Set();
+  out.forEach(v=>{
+    more.add(v);
+    more.add(v.replace(/[\.?!]+$/,""));
+  });
+  return Array.from(more);
+}
+
+
+function semanticJudge(userFr, promptDe, expectedFr){
+  const u = ultraNormalize(userFr);
+  const de = (promptDe || "").toString().toLowerCase().trim();
+
+  // Generic: if expected contains optional (e) or alternatives with /, accept single variant
+  const expVars = expandExpectedVariants(expectedFr).map(ultraNormalize);
+  if (expVars.includes(u)) return {ok:true, note:null};
+
+  // OE/Œ already handled by ultraNormalize; spaces already normalized
+
+  // Rule: "ein bisschen" – allow "un peu" or "un peu de" when not specified
+  if (de === "ein bisschen"){
+    if (u === "un peu" || u === "un peu de") return {ok:true, note: (u==="un peu" ? "Ziel: un peu de" : "Ziel: un peu")};
+  }
+
+  // Rule: "ich bin müde."
+  if (/^ich bin müde\.?$/.test(de)){
+    if (u === "je suis fatigue" || u === "je suis fatiguee") return {ok:true, note:"Ziel: Je suis fatigué(e)."};
+  }
+
+  // Weather vs non-weather: if DE starts with "es ist" + adj and expected uses "il fait ..."
+  // accept "c'est ..." as correct non-weather but keep weather target
+  if (/^es ist\s+/.test(de) && ultraNormalize(expectedFr).startsWith("il fait ")){
+    const adj = ultraNormalize(expectedFr).replace(/^il fait\s+/,""); // e.g. beau/mauvais
+    if (u === "cest " + adj) return {ok:true, note:"Wetter: " + expectedFr};
+  }
+
+  // Apply SEMANTIC_RULES matrix if present
+  if (typeof SEMANTIC_RULES !== "undefined"){
+    for (const r of SEMANTIC_RULES){
+      try{
+        if (!r.matchDe(de)) continue;
+      } catch(e){ continue; }
+      const targets = (r.target||[]).map(ultraNormalize);
+      const accepts = (r.accepted||[]).map(ultraNormalize);
+      if (targets.includes(u)) return {ok:true, note:null};
+      if (accepts.includes(u)){
+        return {ok:true, note: (r.note ? r.note : (r.target && r.target[0] ? "Ziel: " + r.target[0] : null))};
+      }
+      return {ok:false, note:null};
+    }
+  }
+
+  return {ok:false, note:null};
+}
