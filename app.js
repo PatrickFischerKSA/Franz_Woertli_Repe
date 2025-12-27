@@ -52,6 +52,22 @@ function expandEVariants(s){
   return [s.replace(/\(e\)/g,""), s.replace(/\(e\)/g,"e")];
 }
 
+function splitSlashVariants(s){
+  if (!s) return [];
+  // split on / and also allow " / " variants
+  return String(s).split("/").map(x=>x.trim()).filter(Boolean);
+}
+
+function collectExpectedCandidates(expected){
+  const cands = [];
+  for (const part of splitSlashVariants(expected)){
+    for (const ev of expandEVariants(part)){
+      cands.push(ev);
+    }
+  }
+  return cands;
+}
+
 
 /* ---------- ARTIKEL-CHECK (GENUS MUSS STIMMEN) ----------
    Wenn der/die Lernende einen Artikel eingibt (le/la/un/une/l’ ...),
@@ -104,6 +120,13 @@ const SEMANTIC_FR_EQUIV = {
   "denken": ["penser","croire"],
   "sagen": ["dire","raconter"],
   "schauen": ["regarder","voir"]
+
+  // Mehrere zulässige Entsprechungen (DE → FR), auch ohne echte Synonymie
+  "die fahrkarte": ["le billet","le ticket"],
+  "zufrieden": ["content","satisfait","satisfaite"],
+  "lustig": ["drôle","amusant","amusante"],
+  "schön": ["beau","belle"],
+  "ich gehe einkaufen.": ["je fais les courses","je vais acheter","je vais faire les courses"]
 };
 
 
@@ -156,31 +179,43 @@ function idiomMatch(uNorm, expected){
 
 function isCorrect(user, expected, promptDe){
   const userRaw = (user || "");
+  const uArt = extractLeadingArticle(userRaw);
   const u = ultraNormalize(userRaw);
 
-  // 0) DE-getriggerte Handlungsmuster (gehen + Tätigkeit)
-  if (deActionMatch(u, promptDe)) return true;
+  // Kandidaten aus expected (slash + (e))
+  let candidates = collectExpectedCandidates(expected);
 
-  // 1) direkte Lösung (+ (e)-Varianten)
-  for (const ev of expandEVariants(expected)){
-    if (u === ultraNormalize(ev)) return true;
-  }
-
-  // 2) Item-spezifische Alternativen
-  if (Array.isArray(this?.frAlt)){
-    for (const alt of this.frAlt){
-      if (u === ultraNormalize(alt)) return true;
-    }
-  }
-
-  // 3) Deutsche Prompt-abhängige Entsprechungen
-  const key = (promptDe || "").toLowerCase();
+  // DE-Map Alternativen
+  const key = (promptDe || "").toLowerCase().trim();
   if (SEMANTIC_FR_EQUIV && SEMANTIC_FR_EQUIV[key]){
-    for (const alt of SEMANTIC_FR_EQUIV[key]){
-      if (u === ultraNormalize(alt)) return true;
-    }
+    candidates = candidates.concat(SEMANTIC_FR_EQUIV[key]);
   }
 
+  // Item-spezifische Alternativen
+  if (Array.isArray(this?.frAlt)){
+    candidates = candidates.concat(this.frAlt);
+  }
+
+  // Idiome (falls Map existiert)
+  if (typeof SEMANTIC_IDIOMS !== "undefined"){
+    const expKey = ultraNormalize(expected);
+    const list = SEMANTIC_IDIOMS[expKey] || SEMANTIC_IDIOMS[expected] || null;
+    if (list) candidates = candidates.concat(list);
+  }
+
+  // Aktion-Pattern via DE_ACTION_EQUIV/deActionMatch (falls vorhanden)
+  if (typeof deActionMatch === "function" && deActionMatch(u, promptDe)) return true;
+
+  // Prüfen über Kandidaten
+  for (const cand of candidates){
+    if (!cand) continue;
+    const cArt = extractLeadingArticle(cand);
+
+    // Genus strikt, falls User Artikel schreibt und Kandidat Artikel hat
+    if (uArt && cArt && uArt !== cArt) continue;
+
+    if (u === ultraNormalize(cand)) return true;
+  }
   return false;
 }
 
@@ -204,6 +239,7 @@ function updateUI(){
 
 function updateMusic(ratePercent){
   if (!toneOn || !audioUnlocked){ $("audioHint").textContent = ""; return; }
+  if (answeredTotal < ROUND_SIZE) { $("audioHint").textContent = ""; return; }
   const tiers = [
     {t:90, id:"audio90", label:"La Marseillaise"},
     {t:80, id:"audio80", label:"Mon mec à moi"},
@@ -247,7 +283,7 @@ function startRound(){ roundSet = pickRoundSet(); qIndex = 0; showQuestion(); }
 
 function showQuestion(){
   const item = roundSet[qIndex];
-  $("prompt").textContent = item.de;
+  $("prompt").textContent = (item.de && item.de.includes(" – ")) ? item.de.split(" – ").slice(-1)[0].trim() : item.de;
   $("answer").value = "";
   $("answer").disabled = false;
   $("btnCheck").disabled = false;
@@ -272,8 +308,11 @@ function checkAnswer(){
     if (/\(e\)/.test(sol)){
       sol = expandEVariants(sol).join(" / ");
     }
-    setFeedback("✗ falsch<br><small>Erwartet: <b>"+item.fr.replace(/\(e\)/g,"")+"</b></small>", "bad");
-  }
+    let sol = item.fr || "";
+    if (sol.includes("/")) sol = splitSlashVariants(sol)[0] || sol;
+    sol = sol.replace(/\(e\)/g,"");
+    setFeedback("✗ falsch<br><small>Erwartet: <b>"+sol+"</b></small>", "bad");
+}
   $("answer").disabled = true;
   $("btnCheck").disabled = true;
   $("btnNext").disabled = false;
