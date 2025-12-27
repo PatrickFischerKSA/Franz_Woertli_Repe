@@ -219,3 +219,149 @@ $("btnTone").addEventListener("click", ()=>{
 });
 
 startLevel(1);
+
+
+// === AUDIO FIX: reliable autoplay after first round ===
+let audioUnlocked = false;
+function unlockAudio() {
+  if (audioUnlocked) return;
+  const audios = document.querySelectorAll("audio");
+  audios.forEach(a => {
+    try { a.muted = true; a.play().then(()=>{ a.pause(); a.currentTime = 0; a.muted = false; }); } catch(e){}
+  });
+  audioUnlocked = true;
+}
+
+document.addEventListener("click", unlockAudio, { once: true });
+document.addEventListener("keydown", unlockAudio, { once: true });
+
+function playRoundMusic(hitRate){
+  if (!audioUnlocked) return;
+  let a = null;
+  if (hitRate >= 90) a = document.getElementById("audio90");
+  else if (hitRate >= 80) a = document.getElementById("audio80");
+  else if (hitRate >= 70) a = document.getElementById("audio70");
+  else if (hitRate >= 60) a = document.getElementById("audio60");
+  else if (hitRate >= 50) a = document.getElementById("audio50");
+  if (a) { try { a.currentTime = 0; a.play(); } catch(e){} }
+}
+// === END AUDIO FIX ===
+
+
+// === FIX: déjeuner – Verb/Nomen akzeptieren ===
+function matchDejeunerPrompt(user, promptDe){
+  const u = ultraNormalize(user || "");
+  const p = (promptDe || "").toLowerCase();
+  if (p.includes("déjeuner") && p.includes("frühstück")){
+    if (u === "dejeuner" || u === "le petit-dejeuner" || u === "petit-dejeuner") return true;
+  }
+  return false;
+}
+// === END FIX ===
+
+
+// === FIXES 1–4: semantic acceptance by DE prompt ===
+function semanticAccept(user, promptDe){
+  const u = ultraNormalize(user || "");
+  const p = (promptDe || "").toLowerCase();
+
+  // 1) stilles Wasser
+  if (p.includes("stilles wasser")){
+    if (u === "leau plate" || u === "eau non gazeuse") return {ok:true, note:"Ziel: l’eau plate"};
+  }
+
+  // 2) ein Gericht auswählen
+  if (p.includes("gericht") && p.includes("ausw")){
+    if (u === "choisir un plat") return {ok:true};
+    if (u === "choisir un repas") return {ok:true, note:"Üblicher: choisir un plat"};
+  }
+
+  // 3) die Fahrkarte (Nomen: falsches Genus bleibt falsch)
+  if (p.includes("fahrkarte")){
+    if (u === "le billet") return {ok:true};
+    if (u === "le ticket") return {ok:true, note:"Auch gebräuchlich"};
+  }
+
+  // 4) es ist schön – Wetter vs. nicht Wetter
+  if (p.trim() === "es ist schön"){
+    // Wetterform bevorzugt/erwartet
+    if (u === "il fait beau") return {ok:true};
+    // Nicht-Wetter inhaltlich korrekt, aber Hinweis
+    if (u === "cest beau") return {ok:true, note:"Nicht Wetter: korrekt. Wetter: il fait beau"};
+  }
+
+  return {ok:false};
+}
+// === END FIXES ===
+
+
+// ================= REGELBASIERTE SEMANTIK =================
+// Ziel: keine Einzelfall-Flickerei, sondern systematische Bewertung
+// Bewertung erfolgt vom DE-Prompt aus
+
+
+const SEMANTIC_RULES = [
+  {
+    matchDe: de => /stilles wasser|wasser ohne kohlensaeure/.test(de),
+    target: ["l’eau plate"],
+    accepted: ["eau non gazeuse","sans gaz"]
+  },
+  {
+    matchDe: de => /wasser mit kohlensaeure|sprudel/.test(de),
+    target: ["l’eau gazeuse"],
+    accepted: ["eau pétillante","avec gaz"]
+  },
+  {
+    matchDe: de => /gericht.*ausw|essen.*ausw/.test(de),
+    target: ["choisir un plat"],
+    accepted: ["choisir un repas"]
+  },
+  {
+    matchDe: de => /fahrkarte|ticket|billet/.test(de),
+    target: ["le billet"],
+    accepted: ["le ticket"],
+    strictGenus: true
+  },
+  {
+    matchDe: de => /^es ist schön$/.test(de.trim()),
+    target: ["il fait beau"],
+    accepted: ["c’est beau"],
+    note: "Nicht Wetter korrekt – Wetter: il fait beau"
+  },
+  {
+    matchDe: de => /^es ist schlecht$/.test(de.trim()),
+    target: ["il fait mauvais"],
+    accepted: ["c’est mauvais"],
+    note: "Nicht Wetter korrekt – Wetter: il fait mauvais"
+  },
+  {
+    matchDe: de => /einkaufen/.test(de),
+    target: ["je fais les courses"],
+    accepted: ["je vais acheter","je vais faire les courses"]
+  }
+];
+
+
+function evaluateByRules(user, promptDe){
+  const u = ultraNormalize(user || "");
+  const de = (promptDe || "").toLowerCase();
+
+  for (const r of SEMANTIC_RULES){
+    if (!r.matchDe(de)) continue;
+
+    const all = [...(r.target||[]), ...(r.accepted||[])];
+    for (const cand of all){
+      if (u === ultraNormalize(cand)){
+        return {
+          ok: true,
+          note: r.target && !r.target.some(t => ultraNormalize(t) === u)
+                ? "Ziel: " + r.target[0]
+                : null
+        };
+      }
+    }
+    return { ok:false };
+  }
+  return null;
+}
+// ================= END REGELBASIERTE SEMANTIK =================
