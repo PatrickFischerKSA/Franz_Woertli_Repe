@@ -1,1 +1,57 @@
-<!-- unchanged UI, music gated by user action -->
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Deutsch → Französisch</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <main class="app">
+
+    <h1>Deutsch → Französisch</h1>
+
+    <div class="controls">
+      <button id="toggleSound">🔊 Ton an</button>
+      <button id="resetGame">Reset</button>
+    </div>
+
+    <div class="progress">
+      <div id="progressBar"></div>
+    </div>
+
+    <div class="stats">
+      <span><strong>Level:</strong> <span id="level">1</span></span>
+      <span><strong>Runde:</strong> <span id="round">1</span>/5</span>
+      <span><strong>Aufgabe:</strong> <span id="task">1</span>/25</span>
+      <span><strong>Trefferquote:</strong> <span id="accuracy">0%</span></span>
+    </div>
+
+    <div id="musicStatus" class="music-status"></div>
+
+    <section class="question">
+      <h2 id="prompt">…</h2>
+
+      <input
+        type="text"
+        id="answerInput"
+        placeholder="Französisch eintippen…"
+        autocomplete="off"
+        spellcheck="false"
+      />
+
+      <div class="buttons">
+        <button id="checkAnswer">Antwort prüfen</button>
+        <button id="nextTask" disabled>Weiter</button>
+      </div>
+
+      <div id="feedback"></div>
+    </section>
+
+  </main>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
