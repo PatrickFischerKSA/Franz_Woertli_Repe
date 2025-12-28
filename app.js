@@ -1,17 +1,9 @@
-/* =========================================================
-   STATE
-========================================================= */
-
 let currentIndex = 0;
 let correctCount = 0;
 let totalCount = 0;
 let round = 1;
 let soundEnabled = false;
 let audio = null;
-
-/* =========================================================
-   DOM
-========================================================= */
 
 const promptEl = document.getElementById("prompt");
 const inputEl = document.getElementById("answerInput");
@@ -28,10 +20,6 @@ const toggleSoundBtn = document.getElementById("toggleSound");
 const resetBtn = document.getElementById("resetGame");
 const musicStatusEl = document.getElementById("musicStatus");
 
-/* =========================================================
-   AUDIO (browser-konform)
-========================================================= */
-
 function initAudio() {
   if (audio !== null) return;
   audio = new Audio("music.mp3");
@@ -43,16 +31,12 @@ function startMusic() {
     musicStatusEl.textContent = "🔇 Ton aus";
     return;
   }
-
   initAudio();
-
-  audio.play()
-    .then(() => {
-      musicStatusEl.textContent = "🎵 Musik läuft";
-    })
-    .catch(() => {
-      musicStatusEl.textContent = "🎵 Musik bereit – Start nach Interaktion";
-    });
+  audio.play().then(() => {
+    musicStatusEl.textContent = "🎵 Musik läuft";
+  }).catch(() => {
+    musicStatusEl.textContent = "🎵 Musik bereit – Start nach Interaktion";
+  });
 }
 
 function stopMusic() {
@@ -61,10 +45,6 @@ function stopMusic() {
     audio.currentTime = 0;
   }
 }
-
-/* =========================================================
-   NORMALISIERUNG
-========================================================= */
 
 function normalize(str) {
   return str
@@ -77,72 +57,40 @@ function normalize(str) {
     .trim();
 }
 
-/* =========================================================
-   BEWERTUNG
-========================================================= */
-
 function evaluateAnswer(userInput, item) {
   const user = normalize(userInput);
-
   const accepted = item.accepted.map(normalize);
 
-  /* ---------- Wetter strikt ---------- */
   if (item.isWeather === true) {
-    if (accepted.includes(user)) {
-      return { ok: true };
-    }
-    return {
-      ok: false,
-      expected: item.expected
-    };
+    if (accepted.includes(user)) return { ok: true };
+    return { ok: false, expected: item.expected };
   }
 
-  /* ---------- Nomen: Genus strikt ---------- */
   if (item.strictGenus === true) {
-    if (accepted.includes(user)) {
-      return { ok: true };
-    }
-    return {
-      ok: false,
-      expected: item.expected
-    };
+    if (accepted.includes(user)) return { ok: true };
+    return { ok: false, expected: item.expected };
   }
 
-  /* ---------- Adjektive: m/f tolerant ---------- */
   if (item.genderFlexible === true) {
     if (accepted.includes(user)) {
-      return {
-        ok: true,
-        note: "maskulin / feminin akzeptiert"
-      };
+      return { ok: true, note: "maskulin / feminin akzeptiert" };
     }
   }
 
-  /* ---------- Allgemein akzeptiert ---------- */
   if (accepted.includes(user)) {
     return { ok: true };
   }
 
-  return {
-    ok: false,
-    expected: item.expected
-  };
+  return { ok: false, expected: item.expected };
 }
-
-/* =========================================================
-   SPIELLOGIK
-========================================================= */
 
 function loadTask() {
   const item = DATA[currentIndex];
-
   promptEl.textContent = item.prompt;
   inputEl.value = "";
   feedbackEl.textContent = "";
   feedbackEl.style.color = "";
-
   nextBtn.disabled = true;
-
   taskEl.textContent = (currentIndex % 25) + 1;
   roundEl.textContent = round;
   levelEl.textContent = item.level;
@@ -156,18 +104,14 @@ checkBtn.addEventListener("click", () => {
 
   if (result.ok) {
     correctCount++;
-    feedbackEl.textContent =
-      "✓ korrekt" + (result.note ? " (" + result.note + ")" : "");
+    feedbackEl.textContent = "✓ korrekt" + (result.note ? " (" + result.note + ")" : "");
     feedbackEl.style.color = "green";
   } else {
-    feedbackEl.textContent =
-      "✗ falsch – erwartet: " + item.expected;
+    feedbackEl.textContent = "✗ falsch – erwartet: " + item.expected;
     feedbackEl.style.color = "darkred";
   }
 
-  accuracyEl.textContent =
-    Math.round((correctCount / totalCount) * 100) + "%";
-
+  accuracyEl.textContent = Math.round((correctCount / totalCount) * 100) + "%";
   nextBtn.disabled = false;
 });
 
@@ -192,10 +136,6 @@ nextBtn.addEventListener("click", () => {
   loadTask();
 });
 
-/* =========================================================
-   BUTTONS
-========================================================= */
-
 toggleSoundBtn.addEventListener("click", () => {
   soundEnabled = !soundEnabled;
   toggleSoundBtn.textContent = soundEnabled ? "🔊 Ton an" : "🔇 Ton aus";
@@ -205,9 +145,5 @@ toggleSoundBtn.addEventListener("click", () => {
 resetBtn.addEventListener("click", () => {
   location.reload();
 });
-
-/* =========================================================
-   START
-========================================================= */
 
 loadTask();
