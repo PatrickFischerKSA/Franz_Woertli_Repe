@@ -2,8 +2,8 @@ const DATA = [
   {
     level: 1,
     prompt: "Ich bin müde.",
+    target: ["je suis fatigué(e)"],
     accepted: ["je suis fatigué", "je suis fatiguée"],
-    expected: "Je suis fatigué(e).",
     genderFlexible: true,
     strictGenus: false,
     isWeather: false
@@ -11,8 +11,8 @@ const DATA = [
   {
     level: 1,
     prompt: "die Schwester",
-    accepted: ["la sœur", "la soeur"],
-    expected: "la sœur",
+    target: ["la sœur"],
+    accepted: ["la soeur"],
     genderFlexible: false,
     strictGenus: true,
     isWeather: false
@@ -20,8 +20,8 @@ const DATA = [
   {
     level: 1,
     prompt: "ein bisschen",
-    accepted: ["un peu", "un peu de"],
-    expected: "un peu",
+    target: ["un peu"],
+    accepted: ["un peu de"],
     genderFlexible: false,
     strictGenus: false,
     isWeather: false
@@ -29,8 +29,8 @@ const DATA = [
   {
     level: 1,
     prompt: "Wie geht's?",
+    target: ["ça va ?"],
     accepted: ["ça va", "comment ça va"],
-    expected: "Ça va ?",
     genderFlexible: false,
     strictGenus: false,
     isWeather: false
@@ -38,8 +38,8 @@ const DATA = [
   {
     level: 1,
     prompt: "Ich gehe einkaufen.",
-    accepted: ["je fais les courses", "je vais acheter"],
-    expected: "Je fais les courses.",
+    target: ["je fais les courses"],
+    accepted: ["je vais acheter", "je vais faire les courses"],
     genderFlexible: false,
     strictGenus: false,
     isWeather: false
@@ -47,17 +47,8 @@ const DATA = [
   {
     level: 1,
     prompt: "stilles Wasser",
-    accepted: ["l'eau plate", "eau plate", "eau non gazeuse"],
-    expected: "l’eau plate",
-    genderFlexible: false,
-    strictGenus: false,
-    isWeather: false
-  },
-  {
-    level: 1,
-    prompt: "ein Gericht auswählen",
-    accepted: ["choisir un plat"],
-    expected: "choisir un plat",
+    target: ["l’eau plate"],
+    accepted: ["eau plate", "eau non gazeuse"],
     genderFlexible: false,
     strictGenus: false,
     isWeather: false
@@ -65,8 +56,8 @@ const DATA = [
   {
     level: 1,
     prompt: "die Fahrkarte",
-    accepted: ["le billet", "le ticket"],
-    expected: "le billet / le ticket",
+    target: ["le billet"],
+    accepted: ["le ticket"],
     genderFlexible: false,
     strictGenus: true,
     isWeather: false
@@ -74,8 +65,8 @@ const DATA = [
   {
     level: 1,
     prompt: "es ist schön",
-    accepted: ["il fait beau"],
-    expected: "il fait beau",
+    target: ["il fait beau"],
+    accepted: [],
     genderFlexible: false,
     strictGenus: false,
     isWeather: true
@@ -83,8 +74,8 @@ const DATA = [
   {
     level: 1,
     prompt: "déjeuner – das Frühstück",
-    accepted: ["le petit-déjeuner", "petit-déjeuner"],
-    expected: "le petit-déjeuner",
+    target: ["le petit-déjeuner"],
+    accepted: ["petit-déjeuner"],
     genderFlexible: false,
     strictGenus: true,
     isWeather: false
@@ -92,19 +83,10 @@ const DATA = [
   {
     level: 1,
     prompt: "das Wochenende",
-    accepted: ["le week-end", "le weekend"],
-    expected: "le week-end",
+    target: ["le week-end"],
+    accepted: ["le weekend"],
     genderFlexible: false,
     strictGenus: true,
-    isWeather: false
-  },
-  {
-    level: 1,
-    prompt: "frei",
-    accepted: ["libre"],
-    expected: "libre",
-    genderFlexible: false,
-    strictGenus: false,
     isWeather: false
   }
 ];
