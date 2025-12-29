@@ -14,40 +14,33 @@ function normalize(str) {
   return str
     .toLowerCase()
     .normalize("NFD")
-    .replace(/œ/g, "oe")
     .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[’']/g, "'")
-    .replace(/[.,!?;:]/g, "")
+    .replace(/[-’']/g, "")
     .replace(/\s+/g, " ")
     .trim();
 }
 
-function rememberCandidate(prompt, input) {
-  const key = "REVIEW_CANDIDATES_V1";
-  const list = JSON.parse(localStorage.getItem(key) || "[]");
-  list.push({ prompt, input, time: Date.now() });
-  localStorage.setItem(key, JSON.stringify(list));
-}
-
 function evaluateAnswer(userInput, item) {
-  const user = normalize(userInput);
-  const targets = (item.target || []).map(normalize);
-  const accepted = (item.accepted || []).map(normalize);
+  const normInput = normalize(userInput);
+  const normTarget = normalize(item.target[0]);
 
-  if (targets.includes(user)) {
-    return { ok: true, note: null };
+  if (normInput === normTarget) {
+    return { ok: true };
   }
 
-  if (accepted.includes(user)) {
-    return { ok: true, note: "Ziel: " + item.target[0] };
+  if (item.accepted) {
+    for (const a of item.accepted) {
+      if (normalize(a) === normInput) {
+        return { ok: true, note: "Ziel: " + item.target[0] };
+      }
+    }
   }
 
-  rememberCandidate(item.prompt, userInput);
   return { ok: false, expected: item.target[0] };
 }
 
 function loadTask() {
-  const item = DATA[currentIndex];
+  const item = DATA[currentIndex % DATA.length]; // 🔧 FIX: zyklischer Zugriff
   promptEl.textContent = item.prompt;
   inputEl.value = "";
   feedbackEl.textContent = "";
@@ -57,18 +50,17 @@ function loadTask() {
 }
 
 checkBtn.onclick = () => {
-  const item = DATA[currentIndex];
+  const item = DATA[currentIndex % DATA.length]; // 🔧 FIX: zyklischer Zugriff
   const result = evaluateAnswer(inputEl.value, item);
   totalCount++;
 
   if (result.ok) {
     correctCount++;
-    feedbackEl.textContent =
-      "✓ korrekt" + (result.note ? " (" + result.note + ")" : "");
+    feedbackEl.textContent = result.note ? "✔️ " + result.note : "✔️ korrekt";
     feedbackEl.style.color = "green";
   } else {
-    feedbackEl.textContent = "✗ falsch – erwartet: " + result.expected;
-    feedbackEl.style.color = "darkred";
+    feedbackEl.textContent = "✖️ Ziel: " + result.expected;
+    feedbackEl.style.color = "red";
   }
 
   accuracyEl.textContent =
@@ -80,12 +72,8 @@ checkBtn.onclick = () => {
 nextBtn.onclick = () => {
   currentIndex++;
 
-  if (currentIndex >= DATA.length) {
-    promptEl.textContent = "Fertig.";
-    inputEl.disabled = true;
-    checkBtn.disabled = true;
-    nextBtn.disabled = true;
-    return;
+  if (currentIndex >= 25) {
+    return; // 🔧 FIX: KEIN Block, KEIN Text, KEIN Zustand
   }
 
   loadTask();
