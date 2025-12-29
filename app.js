@@ -1,50 +1,14 @@
 let currentIndex = 0;
 let correctCount = 0;
 let totalCount = 0;
-let round = 1;
-let soundEnabled = false;
-let audio = null;
 
 const promptEl = document.getElementById("prompt");
 const inputEl = document.getElementById("answerInput");
 const feedbackEl = document.getElementById("feedback");
 const nextBtn = document.getElementById("nextTask");
 const checkBtn = document.getElementById("checkAnswer");
-
 const accuracyEl = document.getElementById("accuracy");
 const taskEl = document.getElementById("task");
-const roundEl = document.getElementById("round");
-const levelEl = document.getElementById("level");
-
-const toggleSoundBtn = document.getElementById("toggleSound");
-const resetBtn = document.getElementById("resetGame");
-const musicStatusEl = document.getElementById("musicStatus");
-
-function initAudio() {
-  if (audio !== null) return;
-  audio = new Audio("music.mp3");
-  audio.loop = true;
-}
-
-function startMusic() {
-  if (!soundEnabled) {
-    musicStatusEl.textContent = "🔇 Ton aus";
-    return;
-  }
-  initAudio();
-  audio.play().then(() => {
-    musicStatusEl.textContent = "🎵 Musik läuft";
-  }).catch(() => {
-    musicStatusEl.textContent = "🎵 Musik bereit – Start nach Interaktion";
-  });
-}
-
-function stopMusic() {
-  if (audio) {
-    audio.pause();
-    audio.currentTime = 0;
-  }
-}
 
 function normalize(str) {
   return str
@@ -57,31 +21,28 @@ function normalize(str) {
     .trim();
 }
 
+function rememberCandidate(prompt, input) {
+  const key = "REVIEW_CANDIDATES_V1";
+  const list = JSON.parse(localStorage.getItem(key) || "[]");
+  list.push({ prompt, input, time: Date.now() });
+  localStorage.setItem(key, JSON.stringify(list));
+}
+
 function evaluateAnswer(userInput, item) {
   const user = normalize(userInput);
-  const accepted = item.accepted.map(normalize);
+  const targets = (item.target || []).map(normalize);
+  const accepted = (item.accepted || []).map(normalize);
 
-  if (item.isWeather === true) {
-    if (accepted.includes(user)) return { ok: true };
-    return { ok: false, expected: item.expected };
-  }
-
-  if (item.strictGenus === true) {
-    if (accepted.includes(user)) return { ok: true };
-    return { ok: false, expected: item.expected };
-  }
-
-  if (item.genderFlexible === true) {
-    if (accepted.includes(user)) {
-      return { ok: true, note: "maskulin / feminin akzeptiert" };
-    }
+  if (targets.includes(user)) {
+    return { ok: true, note: null };
   }
 
   if (accepted.includes(user)) {
-    return { ok: true };
+    return { ok: true, note: "Ziel: " + item.target[0] };
   }
 
-  return { ok: false, expected: item.expected };
+  rememberCandidate(item.prompt, userInput);
+  return { ok: false, expected: item.target[0] };
 }
 
 function loadTask() {
@@ -89,61 +50,41 @@ function loadTask() {
   promptEl.textContent = item.prompt;
   inputEl.value = "";
   feedbackEl.textContent = "";
-  feedbackEl.style.color = "";
   nextBtn.disabled = true;
-  taskEl.textContent = (currentIndex % 25) + 1;
-  roundEl.textContent = round;
-  levelEl.textContent = item.level;
+  taskEl.textContent = currentIndex + 1;
 }
 
-checkBtn.addEventListener("click", () => {
+checkBtn.onclick = () => {
   const item = DATA[currentIndex];
   const result = evaluateAnswer(inputEl.value, item);
-
   totalCount++;
 
   if (result.ok) {
     correctCount++;
-    feedbackEl.textContent = "✓ korrekt" + (result.note ? " (" + result.note + ")" : "");
+    feedbackEl.textContent =
+      "✓ korrekt" + (result.note ? " (" + result.note + ")" : "");
     feedbackEl.style.color = "green";
   } else {
-    feedbackEl.textContent = "✗ falsch – erwartet: " + item.expected;
+    feedbackEl.textContent = "✗ falsch – erwartet: " + result.expected;
     feedbackEl.style.color = "darkred";
   }
 
-  accuracyEl.textContent = Math.round((correctCount / totalCount) * 100) + "%";
+  accuracyEl.textContent =
+    Math.round((correctCount / totalCount) * 100) + "%";
+
   nextBtn.disabled = false;
-});
+};
 
-nextBtn.addEventListener("click", () => {
+nextBtn.onclick = () => {
   currentIndex++;
-
-  if (currentIndex % 25 === 0) {
-    round++;
-    stopMusic();
-    startMusic();
-  }
-
   if (currentIndex >= DATA.length) {
-    promptEl.textContent = "Fertig!";
+    promptEl.textContent = "Fertig.";
     inputEl.disabled = true;
     checkBtn.disabled = true;
     nextBtn.disabled = true;
-    stopMusic();
     return;
   }
-
   loadTask();
-});
-
-toggleSoundBtn.addEventListener("click", () => {
-  soundEnabled = !soundEnabled;
-  toggleSoundBtn.textContent = soundEnabled ? "🔊 Ton an" : "🔇 Ton aus";
-  startMusic();
-});
-
-resetBtn.addEventListener("click", () => {
-  location.reload();
-});
+};
 
 loadTask();
