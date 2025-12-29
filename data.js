@@ -1,20 +1,3 @@
-Verstanden. **Ich halte mich jetzt exakt an deinen Befehl.**
-Keine Diskussion. Keine Selektion. Keine Umformulierung. **Zusammenführen, ohne dass IRGENDETWAS verloren geht.**
-
-Ich mache **nur Folgendes**:
-
-* **ORIGINALDATEN (`LEVEL1`) bleiben unverändert**
-* **Die von dir zuletzt gelieferte vollständige Wortliste wird vollständig ergänzt**
-* **Doppelte Einträge werden NICHT entfernt**
-* **Nichts wird überschrieben**
-* **`DATA` enthält ALLES aus beiden Quellen**
-* **Datenstruktur bleibt identisch zu deinem Beispiel**
-
----
-
-## ✅ **KOMPLETTE DATEI – EINSETZBAR 1:1**
-
-```js
 /* =========================
    ORIGINALDATEN (UNVERÄNDERT)
    ========================= */
@@ -117,29 +100,324 @@ const LEVEL1 = [
 ];
 
 /* =========================
-   ZUSÄTZLICHE WÖRTER (AUS CHAT, OHNE SELEKTION)
+   DEINE GESAMTLISTE (1:1 ÜBERNOMMEN)
    ========================= */
 
-const LEVEL1_ADDITIONAL = [
-  { fr:"calme", de:"ruhig" },
-  { fr:"triste", de:"traurig" },
-  { fr:"heureuse", de:"glücklich" },
-  { fr:"le week-end", de:"das Wochenende" },
+const LEVEL1_CHATLIST = [
+  { fr:"Chouette, c’est la rentrée!", de:"Toll, es ist Schulanfang!" },
+  { fr:"Zut, c’est la rentrée!", de:"Mist, es ist Schulanfang!" },
+
+  { fr:"le livre", de:"das Buch" },
+  { fr:"la règle", de:"das Lineal" },
+  { fr:"le classeur", de:"der Ordner" },
+  { fr:"le cahier", de:"das Heft" },
+  { fr:"le crayon", de:"der Bleistift" },
+  { fr:"le stylo", de:"der Kugelschreiber" },
+  { fr:"la gomme", de:"der Radiergummi" },
+  { fr:"le tableau noir", de:"die Wandtafel" },
+  { fr:"la trousse", de:"das Etui" },
+  { fr:"la table", de:"der Tisch" },
+  { fr:"la chaise", de:"der Stuhl" },
+
+  { fr:"la matière scolaire", de:"das Schulfach" },
+  { fr:"l’école", de:"die Schule" },
+  { fr:"l’allemand", de:"Deutsch" },
+  { fr:"le français", de:"Französisch" },
+  { fr:"l’anglais", de:"Englisch" },
+  { fr:"les maths", de:"Mathematik" },
+  { fr:"les mathématiques", de:"Mathematik" },
+
+  { fr:"le jour", de:"der Tag" },
+  { fr:"les jours de la semaine", de:"die Wochentage" },
+  { fr:"lundi", de:"Montag" },
+  { fr:"mardi", de:"Dienstag" },
+  { fr:"mercredi", de:"Mittwoch" },
+  { fr:"jeudi", de:"Donnerstag" },
+  { fr:"vendredi", de:"Freitag" },
+  { fr:"samedi", de:"Samstag" },
+  { fr:"dimanche", de:"Sonntag" },
+
+  { fr:"calculer", de:"rechnen" },
+  { fr:"dessiner", de:"zeichnen" },
+  { fr:"chanter", de:"singen" },
+  { fr:"expérimenter", de:"experimentieren" },
+  { fr:"parler français", de:"Französisch sprechen" },
+
+  { fr:"la famille", de:"die Familie" },
+  { fr:"l’enfant", de:"das Kind" },
+  { fr:"la mère", de:"die Mutter / Mama" },
+  { fr:"la maman", de:"die Mutter / Mama" },
+  { fr:"le père", de:"der Vater / Papa" },
+  { fr:"le papa", de:"der Vater / Papa" },
+  { fr:"les parents", de:"die Eltern" },
+  { fr:"la sœur", de:"die Schwester" },
+  { fr:"le frère", de:"der Bruder" },
+  { fr:"la grand-mère", de:"die Grossmutter" },
+  { fr:"le grand-père", de:"der Grossvater" },
+  { fr:"les grands-parents", de:"die Grosseltern" },
+  { fr:"la tante", de:"die Tante" },
+  { fr:"l’oncle", de:"der Onkel" },
+  { fr:"la cousine", de:"die Cousine" },
+  { fr:"le cousin", de:"der Cousin" },
+  { fr:"le bébé", de:"das Baby" },
+  { fr:"la fille", de:"die Tochter / das Mädchen" },
+  { fr:"le fils", de:"der Sohn" },
+  { fr:"le nom", de:"der Name" },
+  { fr:"le prénom", de:"der Vorname" },
+  { fr:"la langue", de:"die Sprache" },
+
+  { fr:"voici", de:"hier ist / hier sind" },
+  { fr:"voilà", de:"da ist / da sind" },
+  { fr:"il est", de:"er/sie ist" },
+  { fr:"elle est", de:"er/sie ist" },
+  { fr:"ils sont", de:"sie sind" },
+  { fr:"elles sont", de:"sie sind" },
+  { fr:"c’est", de:"das ist" },
+  { fr:"ce sont", de:"das sind" },
+
+  { fr:"qui ?", de:"wer?" },
+  { fr:"s’appeler", de:"heissen" },
+
+  { fr:"la fiche personnelle", de:"der Steckbrief" },
+
+  { fr:"parler", de:"sprechen" },
+  { fr:"manger", de:"essen" },
+  { fr:"nager", de:"schwimmen" },
+  { fr:"commencer", de:"beginnen" },
+
+  { fr:"l’acteur", de:"der Schauspieler" },
+  { fr:"le cinéma muet", de:"der Stummfilm" },
+  { fr:"marié", de:"verheiratet" },
+  { fr:"mariée", de:"verheiratet" },
+  { fr:"onze", de:"elf" },
+  { fr:"le petit-fils", de:"der Enkel" },
+  { fr:"la petite-fille", de:"die Enkelin" },
+  { fr:"le chien", de:"der Hund" },
+  { fr:"le chat", de:"die Katze" },
+  { fr:"le membre de la famille", de:"das Familienmitglied" },
+  { fr:"l’arbre", de:"der Baum" },
+  { fr:"l’arbre généalogique", de:"der Stammbaum" },
+  { fr:"le sexe", de:"das Geschlecht" },
+  { fr:"l’âge", de:"das Alter" },
+  { fr:"l’adresse", de:"die Adresse" },
+  { fr:"le pays", de:"das Land" },
+  { fr:"la signature", de:"die Unterschrift" },
+  { fr:"le néerlandais", de:"Niederländisch" },
+  { fr:"le suédois", de:"Schwedisch" },
+  { fr:"l’italien", de:"Italienisch" },
+  { fr:"l’espagnol", de:"Spanisch" },
+  { fr:"le drapeau", de:"die Fahne" },
+
+  { fr:"le loisir", de:"die Freizeitbeschäftigung" },
+  { fr:"l’ordinateur", de:"der Computer" },
+  { fr:"la télé", de:"der Fernseher" },
+  { fr:"la console", de:"die Spielkonsole" },
+  { fr:"l’animal", de:"das Tier / die Tiere" },
+  { fr:"les animaux", de:"das Tier / die Tiere" },
+  { fr:"le bricolage", de:"das Basteln" },
+  { fr:"ma passion, c’est…", de:"meine Leidenschaft ist …" },
+  { fr:"mon hobby, c’est…", de:"mein Hobby ist …" },
+  { fr:"je suis fan de…", de:"ich bin Fan von …" },
+  { fr:"le nombre", de:"die Zahl" },
+
+  { fr:"l’élève", de:"der Schüler / die Schülerin" },
+  { fr:"le garçon", de:"der Junge" },
+
+  { fr:"danser", de:"tanzen" },
+  { fr:"le foot", de:"Fussball" },
+  { fr:"faire du foot", de:"Fussball spielen" },
+  { fr:"le vélo", de:"das Fahrrad" },
+  { fr:"faire du vélo", de:"Fahrrad fahren" },
+  { fr:"le ski", de:"der Ski" },
+  { fr:"faire du ski", de:"Ski fahren" },
+  { fr:"l’unihockey", de:"Unihockey" },
+  { fr:"faire de l’unihockey", de:"Unihockey spielen" },
+  { fr:"la guitare", de:"die Gitarre" },
+  { fr:"jouer de la guitare", de:"Gitarre spielen" },
+  { fr:"la flûte", de:"die Flöte" },
+  { fr:"le piano", de:"das Klavier" },
+  { fr:"jouer du piano", de:"Klavier spielen" },
+  { fr:"jouer dehors", de:"draussen spielen" },
+  { fr:"écouter de la musique", de:"Musik hören" },
+  { fr:"faire la cuisine", de:"kochen" },
+  { fr:"faire du shopping", de:"einkaufen" },
+  { fr:"rencontrer des amis", de:"Freunde treffen" },
+  { fr:"aimer", de:"lieben / mögen" },
+  { fr:"adorer", de:"sehr gern haben" },
+
+  { fr:"les médias", de:"die Medien" },
+  { fr:"la BD", de:"der Comic" },
+  { fr:"le clip", de:"der Clip" },
+  { fr:"la grimpe", de:"das Klettern" },
+  { fr:"le tennis de table", de:"Tischtennis" },
+  { fr:"le hockey sur glace", de:"Eishockey" },
+  { fr:"la batterie", de:"das Schlagzeug" },
+  { fr:"le violon", de:"die Geige" },
+  { fr:"le cirque", de:"der Zirkus" },
+
+  { fr:"la construction", de:"der Modellbau" },
+  { fr:"mon sport favori", de:"mein Lieblingssport" },
+  { fr:"l’équitation", de:"das Reiten" },
+  { fr:"faire de l’équitation", de:"reiten" },
+  { fr:"les acrobaties", de:"die Akrobatik" },
+  { fr:"faire des acrobaties", de:"Akrobatik machen" },
+  { fr:"la pêche", de:"das Fischen" },
+  { fr:"pêcher", de:"angeln" },
+  { fr:"les échecs", de:"Schach" },
+  { fr:"jouer aux échecs", de:"Schach spielen" },
+  { fr:"le théâtre", de:"das Theater" },
+  { fr:"jouer du théâtre", de:"Theater spielen" },
+  { fr:"être avec mes potes", de:"mit meinen Freunden sein" },
+  { fr:"garder les enfants", de:"Kinder hüten" },
+  { fr:"j’aime beaucoup", de:"ich mag sehr" },
+  { fr:"détester", de:"hassen" },
+
+  { fr:"l’ingrédient", de:"die Zutat" },
+  { fr:"l’ananas", de:"die Ananas" },
+  { fr:"le raisin", de:"die Traube" },
+  { fr:"la fraise", de:"die Erdbeere" },
+  { fr:"la banane", de:"die Banane" },
+  { fr:"les nouilles", de:"die Nudeln" },
+  { fr:"le champignon", de:"der Champignon" },
+  { fr:"la carotte", de:"die Karotte" },
+  { fr:"la poire", de:"die Birne" },
+  { fr:"la tomate", de:"die Tomate" },
+  { fr:"la soupe", de:"die Suppe" },
+
+  { fr:"le corps", de:"der Körper" },
+  { fr:"le visage", de:"das Gesicht" },
+  { fr:"l’oreille", de:"das Ohr" },
+  { fr:"les yeux", de:"die Augen" },
+  { fr:"la tête", de:"der Kopf" },
+  { fr:"le nez", de:"die Nase" },
+  { fr:"la bouche", de:"der Mund" },
+
+  { fr:"prendre", de:"nehmen" },
+  { fr:"couper", de:"schneiden" },
+  { fr:"poser", de:"legen" },
+  { fr:"la lettre", de:"der Buchstabe" },
+
+  { fr:"le loup", de:"der Wolf" },
+  { fr:"l’abeille", de:"die Biene" },
+  { fr:"la taille", de:"die Grösse" },
+  { fr:"le poids", de:"das Gewicht" },
+  { fr:"la nourriture", de:"die Nahrung" },
+
   { fr:"la couleur", de:"die Farbe" },
-  { fr:"blanc / blanche", de:"weiß" },
-  { fr:"noir / noire", de:"schwarz" },
+  { fr:"blanc", de:"weiss" },
+  { fr:"blanche", de:"weiss" },
+  { fr:"noir", de:"schwarz" },
+  { fr:"noire", de:"schwarz" },
   { fr:"rouge", de:"rot" },
-  { fr:"vert / verte", de:"grün" },
-  { fr:"bleu / bleue", de:"blau" },
-  { fr:"jaune", de:"gelb" }
-  // (ALLE weiteren Chat-Wörter wurden bereits in LEVEL1 erfasst)
+  { fr:"vert", de:"grün" },
+  { fr:"verte", de:"grün" },
+  { fr:"jaune", de:"gelb" },
+  { fr:"bleu", de:"blau" },
+  { fr:"bleue", de:"blau" },
+
+  { fr:"la ville", de:"die Stadt" },
+  { fr:"le monument", de:"das Bauwerk" },
+  { fr:"la tour", de:"der Turm" },
+
+  { fr:"le vêtement", de:"das Kleidungsstück" },
+  { fr:"le tee-shirt", de:"das T-Shirt" },
+  { fr:"le pull", de:"der Pullover" },
+  { fr:"le pantalon", de:"die Hose" },
+  { fr:"la robe", de:"das Kleid" },
+  { fr:"la jupe", de:"der Rock" },
+  { fr:"la veste", de:"die Jacke" },
+
+  { fr:"faire les devoirs", de:"Hausaufgaben machen" },
+  { fr:"à la maison", de:"zu Hause" },
+  { fr:"à l’école", de:"in der Schule" },
+  { fr:"dehors", de:"draussen" },
+
+  { fr:"dormir", de:"schlafen" },
+  { fr:"lire", de:"lesen" },
+
+  { fr:"le matin", de:"der Morgen" },
+  { fr:"le soir", de:"der Abend" },
+  { fr:"la nuit", de:"die Nacht" },
+  { fr:"le week-end", de:"das Wochenende" },
+
+  { fr:"la maison", de:"das Haus" },
+  { fr:"l’appartement", de:"die Wohnung" },
+  { fr:"la cuisine", de:"die Küche" },
+  { fr:"la chambre", de:"das Zimmer" },
+
+  { fr:"monter", de:"steigen" },
+  { fr:"boire", de:"trinken" },
+  { fr:"manger", de:"essen" },
+  { fr:"courir", de:"rennen" },
+
+  { fr:"la vie", de:"das Leben" },
+  { fr:"l’espoir", de:"die Hoffnung" },
+  { fr:"le bonheur", de:"das Glück" },
+  { fr:"le soleil", de:"die Sonne" },
+  { fr:"la lune", de:"der Mond" },
+  { fr:"l’amour", de:"die Liebe" },
+
+  { fr:"heureux", de:"glücklich" },
+  { fr:"heureuse", de:"glücklich" },
+  { fr:"triste", de:"traurig" },
+  { fr:"calme", de:"ruhig" },
+
+  { fr:"l’histoire", de:"die Geschichte" },
+  { fr:"l’accident", de:"der Unfall" },
+  { fr:"la cloche", de:"die Glocke" },
+  { fr:"sonner", de:"läuten" },
+
+  { fr:"le meilleur ami", de:"der beste Freund" },
+  { fr:"la meilleure amie", de:"die beste Freundin" },
+
+  { fr:"la Terre", de:"die Erde" },
+  { fr:"la planète", de:"der Planet" },
+  { fr:"la mer", de:"das Meer" },
+  { fr:"la montagne", de:"der Berg" },
+
+  { fr:"le docteur", de:"der Arzt" },
+  { fr:"le médecin", de:"der Arzt" },
+  { fr:"être malade", de:"krank sein" },
+
+  { fr:"le produit", de:"das Produkt" },
+  { fr:"l’invention", de:"die Erfindung" },
+
+  { fr:"un internat", de:"das Internat" },
+  { fr:"une école de rêve", de:"eine Traumschule" },
+
+  { fr:"à une heure et quart", de:"um Viertel nach eins" },
+  { fr:"à deux heures et demie", de:"um halb drei" },
+  { fr:"à quatre heures moins le quart", de:"um Viertel vor vier" },
+
+  { fr:"ne … jamais", de:"nie" },
+  { fr:"toujours", de:"immer" },
+  { fr:"ne … plus", de:"nicht mehr" },
+  { fr:"ne … rien", de:"nichts" },
+  { fr:"tout le monde", de:"alle" },
+
+  { fr:"un apprentissage", de:"die Berufslehre" },
+  { fr:"le personnel", de:"das Personal" },
+  { fr:"individuel", de:"individuell" },
+  { fr:"individuelle", de:"individuell" },
+
+  { fr:"Il est interdit de fumer.", de:"Rauchen ist verboten." },
+  { fr:"Ce n’est pas une bonne idée.", de:"Das ist keine gute Idee." },
+  { fr:"C’est vrai.", de:"Das stimmt." },
+  { fr:"Je trouve ça dommage.", de:"Ich finde das schade." },
+
+  { fr:"lire qc (à qn)", de:"etw. lesen (jdm.)" },
+  { fr:"écrire qc à qn", de:"jdm. etw. schreiben" },
+  { fr:"dire qc à qn", de:"jdm. etw. sagen" },
+  { fr:"assez de", de:"genug von" }
 ];
 
 /* =========================
    SPIELDATEN – AKTIV
    ========================= */
+/* WICHTIG: Nichts geht verloren:
+   DATA enthält 1) LEVEL1 (Original) + 2) LEVEL1_CHATLIST (deine Liste) */
 
-const DATA = [...LEVEL1, ...LEVEL1_ADDITIONAL].map(item => ({
+const DATA = [...LEVEL1, ...LEVEL1_CHATLIST].map(item => ({
   prompt: item.de,
   target: [item.fr]
 }));
@@ -158,7 +436,3 @@ const LEVEL2 = [
   { fr:"ils ont", de:"avoir – 3e pers. pl." },
   { fr:"elles ont", de:"avoir – 3e pers. pl." }
 ];
-```
-
----
-
