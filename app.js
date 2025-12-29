@@ -17,6 +17,7 @@ function normalize(str) {
     .replace(/œ/g, "oe")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[’']/g, "'")
+    .replace(/[.,!?;:]/g, "")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -50,6 +51,7 @@ function loadTask() {
   promptEl.textContent = item.prompt;
   inputEl.value = "";
   feedbackEl.textContent = "";
+  feedbackEl.style.color = "";
   nextBtn.disabled = true;
   taskEl.textContent = currentIndex + 1;
 }
@@ -77,6 +79,7 @@ checkBtn.onclick = () => {
 
 nextBtn.onclick = () => {
   currentIndex++;
+
   if (currentIndex >= DATA.length) {
     promptEl.textContent = "Fertig.";
     inputEl.disabled = true;
@@ -84,6 +87,7 @@ nextBtn.onclick = () => {
     nextBtn.disabled = true;
     return;
   }
+
   loadTask();
 };
 
